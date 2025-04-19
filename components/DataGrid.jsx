@@ -82,6 +82,8 @@ const DataGrid = ({
 		updateSelectedClient,
 		selectedPod,
 		updateSelectedPod,
+		selectedDateFilter,
+		updateSelectedDateFilter,
 	} = useFilterStore();
 
 	const [data, setData] = useState([]);
@@ -99,7 +101,6 @@ const DataGrid = ({
 	const [clientOptions, setClientOptions] = useState([]);
 	const [podOptions, setPodOptions] = useState([]);
 	const [meetingToReschedule, setMeetingToReschedule] = useState(null);
-	const [selectedDateFilter, setSelectedDateFilter] = useState("");
 	const [isChangeStatusDropdownOpen, setIsChangeStatusDropdownOpen] = useState({ id: null, col: null });
 
 	useEffect(() => {
@@ -252,7 +253,7 @@ const DataGrid = ({
 	};
 
 	const handleDateFilterChange = (value) => {
-		setSelectedDateFilter(value);
+		updateSelectedDateFilter(value);
 		if (value === "custom") {
 			return;
 		} else {
@@ -260,8 +261,6 @@ const DataGrid = ({
 			updateEndDate(filterDateOptions.find((option) => option.value === value).end);
 		}
 	};
-
-	
 
 	if (isLoading || !data) {
 		return (
@@ -285,7 +284,7 @@ const DataGrid = ({
 				</div>
 
 				{/* Search, Filters, New */}
-				<div className="flex flex-col lg:flex-row justify-end flex-1 items-center gap-4" >
+				<div className="flex flex-col lg:flex-row justify-end flex-1 items-center gap-4">
 					{/* Search - Full width on mobile */}
 					{search && (
 						<div className="w-full p-0 flex items-center h-full m-1 mr-2">
@@ -366,7 +365,8 @@ const DataGrid = ({
 													<Checkbox
 														id={option?.value?.toString()}
 														checked={
-															selectedFilters[filter?.value]?.includes(option?.value) || false
+															selectedFilters[filter?.value]?.includes(option?.value) ||
+															false
 														}
 														onCheckedChange={(isChecked) =>
 															updateFilter(
@@ -377,9 +377,7 @@ const DataGrid = ({
 															)
 														}
 													/>
-													<label
-														className="text-xs font-medium leading-none"
-													>
+													<label className="text-xs font-medium leading-none">
 														{option.label}
 													</label>
 												</div>
@@ -512,7 +510,13 @@ const DataGrid = ({
 					<TableHeader className="bg-gray-100">
 						<TableRow className="hover:bg-gray-100">
 							{columns.map((col) => (
-								<TableHead className={cn(col.type === "button" ? "text-center" : "", col.hideOnMobile && "hidden lg:table-cell")} key={col.accessor}>
+								<TableHead
+									className={cn(
+										col.type === "button" ? "text-center" : "",
+										col.hideOnMobile && "hidden lg:table-cell"
+									)}
+									key={col.accessor}
+								>
 									{col.header}
 								</TableHead>
 							))}
@@ -531,7 +535,10 @@ const DataGrid = ({
 											onClick={() => {
 												handleRowClick(item.id);
 											}}
-											className={cn(col.type === "button" ? "text-center" : "", col.hideOnMobile && "hidden lg:table-cell")}
+											className={cn(
+												col.type === "button" ? "text-center" : "",
+												col.hideOnMobile && "hidden lg:table-cell"
+											)}
 										>
 											{col.type === "chip" ? (
 												<Chip color={col.options[value]}>{value}</Chip>
@@ -544,12 +551,12 @@ const DataGrid = ({
 														</span>
 													)}
 													<span className="flex items-center gap-2">
-														{format(new Date(value.replace("Z", "")), "dd-MM-yyyy", {
+														{format(new Date(value), "dd-MM-yyyy", {
 															locale: es,
 														})}
 													</span>
 													<span className="text-sm text-muted-foreground">
-														{format(new Date(value.replace("Z", "")), "HH:mm", {
+														{format(new Date(value), "HH:mm", {
 															locale: es,
 														})}
 													</span>
@@ -580,17 +587,24 @@ const DataGrid = ({
 																	{col.options[value].label}
 																</Chip>
 															</DropdownMenuTrigger>
-															<DropdownMenuContent className="m-0 p-0"> 
+															<DropdownMenuContent className="m-0 p-0">
 																<DropdownMenuLabel>{col.header}</DropdownMenuLabel>
-																<DropdownMenuSeparator/>
+																<DropdownMenuSeparator />
 																{Object.entries(col.options).map(([key, option]) => (
-																	<DropdownMenuCheckboxItem key={key}
+																	<DropdownMenuCheckboxItem
+																		key={key}
 																		checked={value == option.value}
 																		className={cn(
 																			"cursor-pointer opacity-80 hover:opacity-100 transition-colors duration-100 m-1",
-																			option.value === value && value === null && "bg-yellow-100 text-yellow-900",
-																			option.value === value && value === true && "bg-green-100 text-green-900",
-																			option.value === value && value === false && "bg-red-100 text-red-900"
+																			option.value === value &&
+																				value === null &&
+																				"bg-yellow-100 text-yellow-900",
+																			option.value === value &&
+																				value === true &&
+																				"bg-green-100 text-green-900",
+																			option.value === value &&
+																				value === false &&
+																				"bg-red-100 text-red-900"
 																		)}
 																		onClick={(e) => {
 																			handleUpdateStatus(
@@ -600,7 +614,7 @@ const DataGrid = ({
 																				item.id,
 																				option.value
 																			);
-																	}}
+																		}}
 																	>
 																		{option.label}
 																	</DropdownMenuCheckboxItem>

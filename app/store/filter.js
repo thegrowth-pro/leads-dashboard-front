@@ -7,6 +7,7 @@ const useFilterStore = create(
 			searchTerm: "",
 			startDate: null,
 			endDate: null,
+			selectedDateFilter: null,
 			selectedFilters: {},
 			selectedClient: null,
 			selectedPod: null,
@@ -62,7 +63,7 @@ const useFilterStore = create(
 
 			updateStartDate: (date) => set({ startDate: date }),
 			updateEndDate: (date) => set({ endDate: date }),
-
+			updateSelectedDateFilter: (filter) => set({ selectedDateFilter: filter }),
 			setLastPath: (path) => set({ lastPath: path }), // Agregamos el setter para lastPath
 
 			resetFilters: () =>
@@ -71,6 +72,7 @@ const useFilterStore = create(
 					searchTerm: "",
 					startDate: null,
 					endDate: null,
+					selectedDateFilter: "",
 					selectedClient: null,
 					selectedPod: null,
 				}),

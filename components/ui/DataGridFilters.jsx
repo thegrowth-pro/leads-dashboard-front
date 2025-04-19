@@ -48,9 +48,9 @@ const DataGridFilters = ({
 		updateSelectedClient,
 		selectedPod,
 		updateSelectedPod,
+		selectedDateFilter,
+		updateSelectedDateFilter,
 	} = useFilterStore();
-
-	const [selectedDateFilter, setSelectedDateFilter] = React.useState("");
 
 	useEffect(() => {
 		if (!isLoading && debouncedSearchTerm !== null) {
@@ -59,7 +59,7 @@ const DataGridFilters = ({
 	}, [isLoading, debouncedSearchTerm]);
 
 	const handleDateFilterChange = (value) => {
-		setSelectedDateFilter(value);
+		updateSelectedDateFilter(value);
 		if (value === "custom") {
 			return;
 		} else {

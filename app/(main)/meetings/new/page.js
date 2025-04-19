@@ -19,11 +19,8 @@ import useSessionStore from "@/app/store/session";
 const channelOptions = [
 	{ value: "EMAIL", name: "Email" },
 	{ value: "CALL", name: "Llamada" },
-	{ value: "COLD_CALL", name: "Llamada en frío" },
-	{ value: "HOT_CALL", name: "Llamada en caliente" },
+	{ value: "HOT_CALL", name: "Llamada en tibio" },
 	{ value: "WHATSAPP", name: "WhatsApp" },
-	{ value: "LINKEDIN", name: "Linkedin" },
-	{ value: "OTHER", name: "Otro" },
 ];
 
 export default function NewMeeting() {

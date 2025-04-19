@@ -1,7 +1,6 @@
 "use server";
 
 import { buildQueryParams, request } from "@/lib/aid";
-import { formatDatetoISO } from "@/lib/utils";
 
 const mapStatus = (status) => {
 	if (status === "-1") return null;
@@ -36,6 +35,7 @@ export async function fetchMeetings(
 	if (error) {
 		return { error, data: [], count: 0 };
 	}
+	console.log("fetchMeetings", data);
 	return { data: data.meetings, count: data.count };
 }
 
@@ -109,7 +109,7 @@ export async function createMeeting(formData) {
 	const body = {
 		clientId,
 		sellers,
-		date: formatDatetoISO(date),
+		date,
 		prospect,
 		countryId: country,
 		prospectContactRole,
@@ -185,7 +185,7 @@ export async function rescheduleMeeting(id, newDate) {
 	const url = `/meetings/${id}`;
 
 	const { data, error } = await request(url, "PATCH", {
-		date: formatDatetoISO(newDate),
+		date: newDate,
 		held: null,
 		validated: null,
 		recovered: true,

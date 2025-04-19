@@ -78,12 +78,12 @@ const DataGridCell = ({ column, value, item, user, onUpdate, onReschedule }) => 
 				<div className="flex flex-col">
 					{item.recovered && <span className="text-xs text-indigo-400 font-medium">Reagendada</span>}
 					<span className="flex items-center gap-2">
-						{format(new Date(value.replace("Z", "")), "dd-MM-yyyy", {
+						{format(new Date(value), "dd-MM-yyyy", {
 							locale: es,
 						})}
 					</span>
 					<span className="text-sm text-muted-foreground">
-						{format(new Date(value.replace("Z", "")), "HH:mm", {
+						{format(new Date(value), "HH:mm", {
 							locale: es,
 						})}
 					</span>

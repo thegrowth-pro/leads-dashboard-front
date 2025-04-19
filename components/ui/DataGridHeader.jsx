@@ -13,9 +13,7 @@ import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { filterDateOptions } from "@/lib/utils";
-import { useState } from "react";
 
-import { formatDatetoISO } from "@/lib/utils";
 const DataGridHeader = ({
 	title,
 	itemName,
@@ -43,17 +41,19 @@ const DataGridHeader = ({
 		updateEndDate,
 		updateSelectedClient,
 		updateSelectedPod,
+		selectedDateFilter,
+		updateSelectedDateFilter,
 	} = useFilterStore();
 
-	const [selectedDateFilter, setSelectedDateFilter] = useState(null);
-
 	const handleDateFilterChange = (value) => {
-		setSelectedDateFilter(value);
+		updateSelectedDateFilter(value);
 		if (value !== "custom") {
-			updateStartDate(formatDatetoISO(filterDateOptions.find((option) => option.value === value).start));
-			updateEndDate(formatDatetoISO(filterDateOptions.find((option) => option.value === value).end));
+			updateStartDate(filterDateOptions.find((option) => option.value === value).start);
+			updateEndDate(filterDateOptions.find((option) => option.value === value).end);
 		}
 	};
+
+	console.log("DataGridHeader", selectedDateFilter, startDate, endDate);
 	const selectedPodName = podOptions?.find((pod) => pod.id === selectedPod)?.name;
 	const selectedClientName = clientOptions?.find((client) => client.id === selectedClient)?.name;
 
@@ -116,11 +116,7 @@ const DataGridHeader = ({
 												<DatePicker
 													value={startDate}
 													onChange={(value) =>
-														updateStartDate(
-															formatDatetoISO(
-																new Date(new Date(value).setHours(0, 0, 0, 0))
-															)
-														)
+														updateStartDate(new Date(new Date(value).setHours(0, 0, 0, 0)))
 													}
 													placeholder="Desde"
 												/>
@@ -128,9 +124,7 @@ const DataGridHeader = ({
 													value={endDate}
 													onChange={(value) =>
 														updateEndDate(
-															formatDatetoISO(
-																new Date(new Date(value).setHours(23, 59, 59, 999))
-															)
+															new Date(new Date(value).setHours(23, 59, 59, 999))
 														)
 													}
 													placeholder="Hasta"
@@ -203,7 +197,7 @@ const DataGridHeader = ({
 							onClick={() => {
 								updateStartDate(null);
 								updateEndDate(null);
-								setSelectedDateFilter(null);
+								updateSelectedDateFilter("");
 							}}
 						>
 							<div className="flex gap-2 items-center">

@@ -35,11 +35,8 @@ const validatedOptionsList = [
 const channelOptions = [
 	{ value: "EMAIL", name: "Email" },
 	{ value: "CALL", name: "Llamada" },
-	{ value: "COLD_CALL", name: "Llamada en frío" },
-	{ value: "HOT_CALL", name: "Llamada en caliente" },
+	{ value: "HOT_CALL", name: "Llamada en tibio" },
 	{ value: "WHATSAPP", name: "WhatsApp" },
-	{ value: "LINKEDIN", name: "Linkedin" },
-	{ value: "OTHER", name: "Otro" },
 ];
 
 export default function MeetingDetails({ params }) {
@@ -250,7 +247,7 @@ export default function MeetingDetails({ params }) {
 				<h2 className="text-xl font-semibold">Detalles de la reunión</h2>
 				<div className="flex gap-2 items-center mt-2">
 					<p className="text-gray-500 text-sm">
-						{format(new Date(details.date.replace("Z", "")), "PPP - HH:mm", {
+						{format(new Date(details.date), "PPP - HH:mm", {
 							locale: es,
 						})}
 					</p>
@@ -273,7 +270,7 @@ export default function MeetingDetails({ params }) {
 						label="Fecha de la reunión"
 						value={details.date}
 						onChange={(date) => handleChange("date", date)}
-						disabled={session?.accountType === "EXTERNAL"}
+						disabled={true}
 						timePicker={true}
 						className="w-full"
 					/>

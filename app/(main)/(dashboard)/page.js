@@ -10,7 +10,7 @@ import { fetchClients } from "@/app/actions/clients";
 import { fetchPods } from "@/app/actions/pods";
 import { fetchUsers } from "@/app/actions/users";
 import { useEffect, useState } from "react";
-import { cn, filterDateOptions, formatDatetoISO } from "@/lib/utils";
+import { cn, filterDateOptions } from "@/lib/utils";
 import { Calendar } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { DatePicker } from "@/components/ui/DatePicker";
@@ -172,9 +172,17 @@ export default function Home() {
 		if (value === "custom") {
 			return;
 		} else {
-			setStartDate(formatDatetoISO(filterDateOptions.find((option) => option.value === value).start));
-			setEndDate(formatDatetoISO(filterDateOptions.find((option) => option.value === value).end));
+			setStartDate(filterDateOptions.find((option) => option.value === value).start);
+			setEndDate(filterDateOptions.find((option) => option.value === value).end);
 		}
+	};
+
+	const handleCleanDateFilter = (e) => {
+		e.stopPropagation();
+		e.preventDefault();
+		setSelectedDateFilter("");
+		setStartDate(null);
+		setEndDate(null);
 	};
 
 	return (
@@ -185,7 +193,7 @@ export default function Home() {
 						<Button
 							variant="outline"
 							className={cn(
-								"bg-gray-100 w-full justify-start",
+								"bg-gray-100 w-full justify-between",
 								selectedDateFilter && "border border-indigo-500 bg-accent"
 							)}
 						>
@@ -194,6 +202,19 @@ export default function Home() {
 									? filterDateOptions.find((option) => option.value === selectedDateFilter).label
 									: "Filtrar por fecha"}
 							</p>
+							{selectedDateFilter === "custom" && startDate && endDate && (
+								<p className="text-xs text-gray-500">
+									{startDate.toLocaleDateString()} - {endDate.toLocaleDateString()}
+								</p>
+							)}
+							{selectedDateFilter && (
+								<p
+									className="text-xs text-gray-500 hover:text-black cursor-pointer"
+									onClick={handleCleanDateFilter}
+								>
+									x
+								</p>
+							)}
 						</Button>
 					</DropdownMenuTrigger>
 					<DropdownMenuContent className="w-auto p-4 bg-gray-50 flex flex-col gap-4">
@@ -214,18 +235,14 @@ export default function Home() {
 									<DatePicker
 										value={startDate}
 										onChange={(value) =>
-											setStartDate(
-												formatDatetoISO(new Date(new Date(value).setHours(0, 0, 0, 0)))
-											)
+											setStartDate(new Date(new Date(value).setHours(0, 0, 0, 0)))
 										}
 										placeholder="Desde"
 									/>
 									<DatePicker
 										value={endDate}
 										onChange={(value) =>
-											setEndDate(
-												formatDatetoISO(new Date(new Date(value).setHours(23, 59, 59, 999)))
-											)
+											setEndDate(new Date(new Date(value).setHours(23, 59, 59, 999)))
 										}
 										placeholder="Hasta"
 										disableDatesBefore={startDate}
