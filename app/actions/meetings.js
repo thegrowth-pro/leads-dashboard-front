@@ -35,7 +35,6 @@ export async function fetchMeetings(
 	if (error) {
 		return { error, data: [], count: 0 };
 	}
-	console.log("fetchMeetings", data);
 	return { data: data.meetings, count: data.count };
 }
 

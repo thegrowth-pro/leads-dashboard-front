@@ -14,7 +14,6 @@ const columns = [
 ];
 
 const RankingTable = ({ label, data, isLoading }) => {
-	console.log(data);
 	if (isLoading || !data) {
 		return (
 			<div className="text-center text-gray-400 flex flex-col gap-2 items-center py-4 w-full flex-1">

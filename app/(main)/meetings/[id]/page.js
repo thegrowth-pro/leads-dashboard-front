@@ -98,7 +98,7 @@ export default function MeetingDetails({ params }) {
 							? data?.sellers?.map((seller) => seller.name)
 							: data?.sellers?.map((seller) => seller.id) || [],
 					country: data?.country?.id || "",
-					date: data?.date,
+					date: data?.date.replace("Z", ""),
 					prospect: data?.prospect || "",
 					prospectContactRole: data?.prospectContactRole || "",
 					prospectContactName: data?.prospectContactName || "",

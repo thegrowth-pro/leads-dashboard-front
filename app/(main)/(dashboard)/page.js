@@ -177,14 +177,25 @@ export default function Home() {
 		}
 	};
 
-	const handleCleanDateFilter = (e) => {
-		e.stopPropagation();
-		e.preventDefault();
+	const handleCleanDateFilter = () => {
 		setSelectedDateFilter("");
 		setStartDate(null);
 		setEndDate(null);
 	};
 
+	const setStartCustomDate = (value) => {
+		const year = value.getFullYear();
+		const month = (value.getMonth() + 1).toString().padStart(2, "0");
+		const day = value.getDate().toString().padStart(2, "0");
+		setStartDate(`${year}-${month}-${day}T00:00:00`);
+	};
+
+	const setEndCustomDate = (value) => {
+		const year = value.getFullYear();
+		const month = (value.getMonth() + 1).toString().padStart(2, "0");
+		const day = value.getDate().toString().padStart(2, "0");
+		setEndDate(`${year}-${month}-${day}T23:59:59`);
+	};
 	return (
 		<div className="flex flex-col gap-4 p-4 w-full">
 			<div className="flex flex-col md:flex-row justify-end gap-4">
@@ -202,19 +213,6 @@ export default function Home() {
 									? filterDateOptions.find((option) => option.value === selectedDateFilter).label
 									: "Filtrar por fecha"}
 							</p>
-							{selectedDateFilter === "custom" && startDate && endDate && (
-								<p className="text-xs text-gray-500">
-									{startDate.toLocaleDateString()} - {endDate.toLocaleDateString()}
-								</p>
-							)}
-							{selectedDateFilter && (
-								<p
-									className="text-xs text-gray-500 hover:text-black cursor-pointer"
-									onClick={handleCleanDateFilter}
-								>
-									x
-								</p>
-							)}
 						</Button>
 					</DropdownMenuTrigger>
 					<DropdownMenuContent className="w-auto p-4 bg-gray-50 flex flex-col gap-4">
@@ -234,16 +232,12 @@ export default function Home() {
 								<div className="flex flex-col gap-2">
 									<DatePicker
 										value={startDate}
-										onChange={(value) =>
-											setStartDate(new Date(new Date(value).setHours(0, 0, 0, 0)))
-										}
+										onChange={(value) => setStartCustomDate(value)}
 										placeholder="Desde"
 									/>
 									<DatePicker
 										value={endDate}
-										onChange={(value) =>
-											setEndDate(new Date(new Date(value).setHours(23, 59, 59, 999)))
-										}
+										onChange={(value) => setEndCustomDate(value)}
 										placeholder="Hasta"
 										disableDatesBefore={startDate}
 									/>

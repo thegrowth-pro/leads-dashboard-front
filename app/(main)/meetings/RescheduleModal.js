@@ -7,7 +7,7 @@ import { rescheduleMeeting } from "@/app/actions/meetings";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Loader } from "lucide-react";
-
+import { formatDatetoISO } from "@/lib/utils";
 export default function RescheduleModal({ refreshData, onClose, meetingId }) {
 	const [newDate, setNewDate] = useState();
 	const [loading, setLoading] = useState(false);
@@ -15,7 +15,8 @@ export default function RescheduleModal({ refreshData, onClose, meetingId }) {
 
 	const handleReschedule = async () => {
 		setLoading(true);
-		const { error } = await rescheduleMeeting(meetingId, newDate);
+		const newDateISO = formatDatetoISO(newDate);
+		const { error } = await rescheduleMeeting(meetingId, newDateISO);
 
 		if (error) {
 			toast({

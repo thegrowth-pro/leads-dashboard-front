@@ -53,7 +53,6 @@ const DataGridHeader = ({
 		}
 	};
 
-	console.log("DataGridHeader", selectedDateFilter, startDate, endDate);
 	const selectedPodName = podOptions?.find((pod) => pod.id === selectedPod)?.name;
 	const selectedClientName = clientOptions?.find((client) => client.id === selectedClient)?.name;
 
@@ -211,6 +210,8 @@ const DataGridHeader = ({
 									? "Este año"
 									: selectedDateFilter === "custom"
 									? "Custom"
+									: selectedDateFilter === "allways"
+									? "Desde siempre"
 									: "Custom"}
 								<X className="h-4 w-4 hover:text-orange-800 hover:scale-105" />
 							</div>

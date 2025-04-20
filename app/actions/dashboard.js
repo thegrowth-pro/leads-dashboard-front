@@ -15,12 +15,7 @@ export async function getTotalStats(filters) {
 }
 
 export async function getClientRanking(filters) {
-	if (filters.startDate) {
-		filters.startDate = filters.startDate.toISOString();
-	}
-	if (filters.endDate) {
-		filters.endDate = filters.endDate.toISOString();
-	}
+	console.log(filters);
 	const queryParams = buildQueryParams({ ...filters });
 
 	const url = `/meetings/stats/clients?${queryParams}`;
@@ -33,12 +28,6 @@ export async function getClientRanking(filters) {
 }
 
 export async function getSdrRanking(filters) {
-	if (filters.startDate) {
-		filters.startDate = filters.startDate.toISOString();
-	}
-	if (filters.endDate) {
-		filters.endDate = filters.endDate.toISOString();
-	}
 	const queryParams = buildQueryParams({ ...filters });
 
 	const url = `/meetings/stats/sdrs?${queryParams}`;
@@ -51,12 +40,6 @@ export async function getSdrRanking(filters) {
 }
 
 export async function getPodRanking(filters) {
-	if (filters.startDate) {
-		filters.startDate = filters.startDate.toISOString();
-	}
-	if (filters.endDate) {
-		filters.endDate = filters.endDate.toISOString();
-	}
 	const queryParams = buildQueryParams({ ...filters });
 
 	const url = `/meetings/stats/pods?${queryParams}`;

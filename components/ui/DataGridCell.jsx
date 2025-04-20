@@ -71,22 +71,24 @@ const DataGridCell = ({ column, value, item, user, onUpdate, onReschedule }) => 
 		}
 	};
 
+	const formatDate = (date) => {
+		const str = date.split("T")[0].split("-").reverse().join("-");
+		return str;
+	};
+
+	const formatTime = (date) => {
+		const str = date.split("T")[1].split(":");
+		return str[0] + ":" + str[1];
+	};
+
 	// Manejar diferentes tipos de celdas
 	switch (column.type) {
 		case "date":
 			return (
 				<div className="flex flex-col">
 					{item.recovered && <span className="text-xs text-indigo-400 font-medium">Reagendada</span>}
-					<span className="flex items-center gap-2">
-						{format(new Date(value), "dd-MM-yyyy", {
-							locale: es,
-						})}
-					</span>
-					<span className="text-sm text-muted-foreground">
-						{format(new Date(value), "HH:mm", {
-							locale: es,
-						})}
-					</span>
+					<span className="flex items-center gap-2">{formatDate(value)}</span>
+					<span className="text-sm text-muted-foreground">{formatTime(value)}</span>
 				</div>
 			);
 

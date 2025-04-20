@@ -15,7 +15,7 @@ import { PhoneInput } from "@/components/ui/PhoneInput";
 import { MultiSelect } from "@/components/ui/multi-select";
 import Combobox from "@/components/ui/Combobox";
 import useSessionStore from "@/app/store/session";
-
+import { formatDatetoISO } from "@/lib/utils";
 const channelOptions = [
 	{ value: "EMAIL", name: "Email" },
 	{ value: "CALL", name: "Llamada" },
@@ -88,6 +88,7 @@ export default function NewMeeting() {
 		if (!details) return;
 
 		setIsLoading(true);
+		details.date = formatDatetoISO(details.date);
 		const { data, error } = await createMeeting(details);
 
 		if (error) {
