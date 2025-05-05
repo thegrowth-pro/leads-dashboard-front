@@ -136,7 +136,7 @@ const DataGridCell = ({ column, value, item, user, onUpdate, onReschedule }) => 
 							))}
 						</DropdownMenuContent>
 					</DropdownMenu>
-					{column.accessor === "held" && item.held === false && user?.accountType !== "EXTERNAL" && (
+					{column.accessor === "held" && item.held !== true && user?.accountType !== "EXTERNAL" && (
 						<TooltipProvider delayDuration={100}>
 							<Tooltip>
 								<TooltipTrigger asChild>

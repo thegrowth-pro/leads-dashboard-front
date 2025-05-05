@@ -15,7 +15,6 @@ export async function getTotalStats(filters) {
 }
 
 export async function getClientRanking(filters) {
-	console.log(filters);
 	const queryParams = buildQueryParams({ ...filters });
 
 	const url = `/meetings/stats/clients?${queryParams}`;
