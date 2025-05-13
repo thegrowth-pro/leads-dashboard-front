@@ -57,8 +57,8 @@ export async function updateMeeting(formData) {
 	const prospectContactEmail = formData.prospectContactEmail || null;
 	const prospectContactPhone = formData.prospectContactPhone || null;
 	const inbox = formData.inbox || null;
-	const held = mapStatus(formData.held);
-	const validated = mapStatus(formData.validated);
+	const held = formData.held;
+	const validated = formData.validated;
 
 	const url = `/meetings/${id}`;
 
@@ -76,7 +76,7 @@ export async function updateMeeting(formData) {
 	};
 
 	Object.keys(body).forEach((key) => {
-		if (body[key] === null) {
+		if (body[key] === null && key !== "held" && key !== "validated") {
 			delete body[key];
 		}
 	});
