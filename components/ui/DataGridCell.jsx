@@ -30,44 +30,51 @@ const DataGridCell = ({ column, value, item, user, onUpdate, onReschedule }) => 
 
 	const handleUpdateStatus = async (event, col, updateFunction = null, id, newValue) => {
 		event.stopPropagation();
-		if (!updateFunction || user?.accountType !== "ADMIN") return;
-		setIsEditing(true);
+		if (updateFunction && (user?.accountType === "ADMIN" || user?.role === "MANAGER")) {
+			setIsEditing(true);
 
-		// Verificar que updateFunction sea una función
-		if (typeof updateFunction !== "function") {
-			toast({
-				title: "Error",
-				description: `La función para actualizar no está definida.`,
-				variant: "destructive",
-			});
-			setIsEditing(false);
-			return;
-		}
-
-		try {
-			const { error } = await updateFunction(id, newValue);
-			if (error) {
+			// Verificar que updateFunction sea una función
+			if (typeof updateFunction !== "function") {
 				toast({
 					title: "Error",
-					description: `Ocurrió un error al actualizar la ${item}`,
+					description: `La función para actualizar no está definida.`,
 					variant: "destructive",
 				});
-			} else {
-				toast({
-					title: `Estado actualizado correctamente`,
-					variant: "success",
-				});
-				onUpdate?.(item.id, col, newValue);
+				setIsEditing(false);
+				return;
 			}
-		} catch (err) {
+
+			try {
+				const { error } = await updateFunction(id, newValue);
+				if (error) {
+					toast({
+						title: "Error",
+						description: `Ocurrió un error al actualizar la ${item}`,
+						variant: "destructive",
+					});
+				} else {
+					toast({
+						title: `Estado actualizado correctamente`,
+						variant: "success",
+					});
+					onUpdate?.(item.id, col, newValue);
+				}
+			} catch (err) {
+				toast({
+					title: "Error",
+					description: `Ocurrió un error inesperado.`,
+					variant: "destructive",
+				});
+			} finally {
+				setIsEditing(false);
+				setIsDropdownOpen(false);
+			}
+		} else {
 			toast({
 				title: "Error",
-				description: `Ocurrió un error inesperado.`,
+				description: `No tienes permisos para actualizar este estado.`,
 				variant: "destructive",
 			});
-		} finally {
-			setIsEditing(false);
-			setIsDropdownOpen(false);
 		}
 	};
 

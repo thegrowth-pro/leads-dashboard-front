@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { encrypt, deleteSession, createUserCookie } from "@/lib/session";
-import { cookies } from "next/headers";
 import { request } from "@/lib/aid";
 
 // 1. Specify protected and public routes
@@ -53,7 +52,6 @@ export default async function middleware(req) {
 	return NextResponse.next();
 }
 
-// Routes Middleware should not run on
 export const config = {
 	matcher: ["/((?!api|_next/static|_next/image|.*\\.png$).*)"],
 };

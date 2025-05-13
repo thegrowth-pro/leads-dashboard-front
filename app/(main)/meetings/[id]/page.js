@@ -20,16 +20,17 @@ import useSessionStore from "@/app/store/session";
 import { useRouter } from "next/navigation";
 import Loading from "@/app/(main)/loading";
 import CommentsModal from "@/components/CommentsModal";
-const heldOptionsList = [
-	{ value: "-1", name: "Pendiente", color: "yellow" },
-	{ value: "1", name: "Realizada", color: "green" },
-	{ value: "0", name: "No Realizada", color: "red" },
-];
 
 const validatedOptionsList = [
-	{ value: "-1", name: "Pendiente", color: "yellow" },
-	{ value: "1", name: "Validada", color: "green" },
-	{ value: "0", name: "Rechazada", color: "red" },
+	{ name: "Pendiente", color: "yellow", value: null },
+	{ name: "Validada", color: "green", value: true },
+	{ name: "Rechazada", color: "red", value: false },
+];
+
+const heldOptionsList = [
+	{ name: "Pendiente", color: "yellow", value: null },
+	{ name: "Realizada", color: "green", value: true },
+	{ name: "No Realizada", color: "red", value: false },
 ];
 
 const channelOptions = [
@@ -85,6 +86,7 @@ export default function MeetingDetails({ params }) {
 					router.push("/not-found");
 				}
 				data.comments = data?.comments ? data.comments.reverse() : [];
+				console.log(data.validated, data.held);
 				setDetails({
 					id: data?.id || null,
 					pod: data?.pod?.id || null,
@@ -106,8 +108,8 @@ export default function MeetingDetails({ params }) {
 					prospectContactPhone: data?.prospectContactPhone || "",
 					inbox: data?.inbox?.id || "",
 					channel: data?.channel || "",
-					validated: validatedOptionsList.find((opt) => opt.value === data?.validated)?.value || "-1",
-					held: heldOptionsList.find((opt) => opt.value === data?.held)?.value || "-1",
+					validated: data?.validated,
+					held: data?.held,
 					comments: data?.comments || [],
 				});
 				setInitialMeeting(data);
@@ -139,6 +141,7 @@ export default function MeetingDetails({ params }) {
 		if (!details) return;
 
 		setIsLoading(true);
+		console.log(details);
 		const { data, error } = await updateMeeting(details);
 
 		if (error) {
@@ -241,6 +244,8 @@ export default function MeetingDetails({ params }) {
 		return <Loading />;
 	}
 
+	console.log(details);
+
 	return (
 		<div className="flex flex-col gap-4 pt-4 w-full h-full">
 			<div className="flex flex-col px-4 pb-4 border-b border-gray-300">
@@ -251,14 +256,17 @@ export default function MeetingDetails({ params }) {
 							locale: es,
 						})}
 					</p>
-					<Chip variant="outline" color={heldOptionsList.find((opt) => opt.value === details.held)?.color}>
-						{heldOptionsList.find((opt) => opt.value === details.held)?.name}
+					<Chip
+						variant="outline"
+						color={heldOptionsList.find((opt) => opt.value === initialMeeting.held)?.color}
+					>
+						{heldOptionsList.find((opt) => opt.value === initialMeeting.held)?.name}
 					</Chip>
 					<Chip
 						variant="outline"
-						color={validatedOptionsList.find((opt) => opt.value === details.validated)?.color}
+						color={validatedOptionsList.find((opt) => opt.value === initialMeeting.validated)?.color}
 					>
-						{validatedOptionsList.find((opt) => opt.value === details.validated)?.name}
+						{validatedOptionsList.find((opt) => opt.value === initialMeeting.validated)?.name}
 					</Chip>
 				</div>
 			</div>
@@ -359,25 +367,22 @@ export default function MeetingDetails({ params }) {
 
 				{session?.role === "SDR" || session?.role === "MANAGER" || session.accountType === "ADMIN" ? (
 					<div className="flex gap-3 flex-col sm:flex-row">
-						{session?.accountType === "ADMIN" && (
-							<SelectInput
-								label="Realizada?"
-								value={details.held}
-								options={heldOptionsList}
-								onChange={(value) => handleChange("held", value)}
-								disabled={session?.accountType === "EXTERNAL"}
-								className="w-full"
-							/>
-						)}
-						{(session?.role === "MANAGER" || session.accountType === "ADMIN") && (
-							<SelectInput
-								label="Validada?"
-								value={details.validated}
-								options={validatedOptionsList}
-								onChange={(value) => handleChange("validated", value)}
-								className="w-full"
-							/>
-						)}
+						<SelectInput
+							label="Realizada?"
+							value={details.held}
+							options={heldOptionsList}
+							onChange={(value) => handleChange("held", value)}
+							disabled={session?.accountType === "EXTERNAL" || session?.role === "SDR"}
+							className="w-full"
+						/>
+						<SelectInput
+							label="Validada?"
+							value={details.validated}
+							options={validatedOptionsList}
+							onChange={(value) => handleChange("validated", value)}
+							disabled={session?.accountType === "EXTERNAL" || session?.role === "SDR"}
+							className="w-full"
+						/>
 					</div>
 				) : null}
 			</div>
