@@ -62,9 +62,15 @@ export function DatePicker({
 	return (
 		<div className="flex flex-col min-w-[255px] gap-1">
 			{label && (
-				<label className="text-sm font-medium text-muted-foreground px-1">
-					Fecha{timePicker ? " y hora" : ""} local*
-				</label>
+				<div className="text-sm font-medium text-muted-foreground px-1">
+					{typeof label === 'boolean' ? (
+						<span>
+							Fecha{timePicker ? " y hora" : ""} local <span className="text-red-500">*</span>
+						</span>
+					) : (
+						label
+					)}
+				</div>
 			)}
 			<Popover open={open} onOpenChange={setOpen} modal={true}>
 				<PopoverTrigger asChild className="w-full">

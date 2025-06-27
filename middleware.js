@@ -31,17 +31,42 @@ export default async function middleware(req) {
 	const isProtectedRoute = protectedRoutes.includes(path);
 	const isPublicRoute = publicRoutes.includes(path);
 
-	const response = await request("/auth/check");
+	let response;
+	try {
+		response = await request("/auth/check");
+	} catch (error) {
+		console.error("Middleware: Error checking auth:", error);
+		// Si hay error en la autenticación y es una ruta protegida, redirigir al login
+		if (isProtectedRoute) {
+			await deleteSession();
+			return NextResponse.redirect(new URL("/login", req.nextUrl));
+		}
+		// Si es una ruta pública, permitir continuar
+		return NextResponse.next();
+	}
 
 	if (isProtectedRoute && response.status !== 200) {
 		await deleteSession();
 		return NextResponse.redirect(new URL("/login", req.nextUrl));
 	}
 
-	await createUserCookie(response.data);
+	// Solo crear la cookie del usuario si tenemos datos válidos
+	if (response.data && typeof response.data === 'object') {
+		try {
+			await createUserCookie(response.data);
+		} catch (error) {
+			console.error("Middleware: Error creating user cookie:", error);
+			// Si no podemos crear la cookie del usuario y es una ruta protegida, redirigir al login
+			if (isProtectedRoute) {
+				await deleteSession();
+				return NextResponse.redirect(new URL("/login", req.nextUrl));
+			}
+		}
+	}
+
 	const accountType = response.data?.accountType;
 
-	if (isProtectedRoute && !accountTypes[accountType].includes(path)) {
+	if (isProtectedRoute && accountType && !accountTypes[accountType]?.includes(path)) {
 		return NextResponse.redirect(new URL("/meetings", req.nextUrl));
 	}
 

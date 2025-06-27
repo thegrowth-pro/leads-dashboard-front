@@ -15,11 +15,14 @@ import {
 import { fetchPods } from "@/app/actions/pods";
 import { ListRestart, LoaderCircle, Plus, Trash2, X, Save } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { resetPassword } from "@/app/actions/accounts";
 import Combobox from "@/components/ui/Combobox";
 import { useRouter } from "next/navigation";
 import Loading from "@/app/(main)/loading";
+import FormBuilder from "@/components/forms/FormBuilder";
+import { fetchFormsByClient, createForm, updateForm, activateForm, deleteForm } from "@/app/actions/forms";
 
 export default function EditClient({ params }) {
 	const unwrappedParams = use(params);
@@ -34,6 +37,10 @@ export default function EditClient({ params }) {
 	const [initialClient, setInitialClient] = useState(null);
 	const [isResettingClientPassword, setIsResettingClientPassword] = useState(false);
 	const [isResettingSellerPassword, setIsResettingSellerPassword] = useState(false);
+	const [clientForms, setClientForms] = useState([]);
+	const [currentForm, setCurrentForm] = useState(null);
+	const [isEditingForm, setIsEditingForm] = useState(false);
+	const [activeTab, setActiveTab] = useState("sellers");
 
 	// Fetch all pods for the select
 	useEffect(() => {
@@ -69,6 +76,23 @@ export default function EditClient({ params }) {
 		};
 		fetchDetails();
 	}, [fetchClientDetails, refreshDetails, unwrappedParams.id]);
+
+	// Fetch client forms
+	useEffect(() => {
+		const fetchForms = async () => {
+			if (unwrappedParams.id) {
+				const { data, error } = await fetchFormsByClient(unwrappedParams.id);
+				if (!error) {
+					setClientForms(data);
+					const activeForm = data.find(form => form.active);
+					if (activeForm && !currentForm) {
+						setCurrentForm(activeForm);
+					}
+				}
+			}
+		};
+		fetchForms();
+	}, [unwrappedParams.id, refreshDetails]);
 
 	// Manejo del envío del formulario para guardar
 	const handleSave = async (e) => {
@@ -261,6 +285,112 @@ export default function EditClient({ params }) {
 		}
 	};
 
+	const handleNewForm = () => {
+		setCurrentForm({
+			name: `Formulario - ${details.name}`,
+			description: "",
+			clientId: details.id,
+			active: true,
+			fields: []
+		});
+		setIsEditingForm(true);
+		setActiveTab("forms"); // Asegurar que estemos en el tab de formularios
+	};
+
+	const handleEditForm = (form) => {
+		setCurrentForm(form);
+		setIsEditingForm(true);
+		setActiveTab("forms"); // Asegurar que estemos en el tab de formularios
+	};
+
+	const handleFormChange = (updatedForm) => {
+		setCurrentForm(updatedForm);
+	};
+
+	const handleSaveForm = async () => {
+		if (!currentForm || !currentForm.name.trim()) {
+			toast({
+				title: "Error",
+				description: "El nombre del formulario es obligatorio",
+				variant: "destructive",
+			});
+			return;
+		}
+
+		setIsLoading(true);
+		try {
+			const { data, error } = currentForm.id 
+				? await updateForm(currentForm.id, currentForm)
+				: await createForm(currentForm);
+
+			if (error) {
+				toast({
+					title: "Error",
+					description: "No se pudo guardar el formulario",
+					variant: "destructive",
+				});
+			} else {
+				toast({
+					title: "Formulario guardado",
+					description: "El formulario se guardó correctamente",
+					variant: "success",
+				});
+				setIsEditingForm(false);
+				setCurrentForm(null); // Resetear el formulario actual
+				setRefreshDetails(!refreshDetails);
+			}
+		} catch (error) {
+			toast({
+				title: "Error",
+				description: "Ocurrió un error inesperado",
+				variant: "destructive",
+			});
+		}
+		setIsLoading(false);
+	};
+
+	const handleActivateForm = async (formId) => {
+		setIsLoading(true);
+		const { error } = await activateForm(formId);
+		if (error) {
+			toast({
+				title: "Error",
+				description: "No se pudo activar el formulario",
+				variant: "destructive",
+			});
+		} else {
+			toast({
+				title: "Formulario activado",
+				description: "El formulario ahora está activo para nuevas reuniones",
+				variant: "success",
+			});
+			setRefreshDetails(!refreshDetails);
+		}
+		setIsLoading(false);
+	};
+
+	const handleDeleteForm = async (formId) => {
+		setIsLoading(true);
+		const { error } = await deleteForm(formId);
+		if (error) {
+			toast({
+				title: "Error",
+				description: error.statusCode === 400 
+					? "No se puede eliminar un formulario con reuniones asociadas"
+					: "No se pudo eliminar el formulario",
+				variant: "destructive",
+			});
+		} else {
+			toast({
+				title: "Formulario eliminado",
+				description: "El formulario se eliminó correctamente",
+				variant: "success",
+			});
+			setRefreshDetails(!refreshDetails);
+		}
+		setIsLoading(false);
+	};
+
 	const disableSave = !details?.name || !details?.email || isLoading;
 	const disableAddSeller = !newSeller?.name || !newSeller?.email || isLoading;
 	const disableAddInbox = !newInbox?.email || isLoading;
@@ -306,13 +436,16 @@ export default function EditClient({ params }) {
 					/>
 				</div>
 
-				<Tabs defaultValue="sellers" className="w-full bg-gray-100 rounded-md">
+				<Tabs value={activeTab} onValueChange={setActiveTab} className="w-full bg-gray-100 rounded-md">
 					<TabsList className="flex justify-between w-full gap-2 bg-gray-200 items-center p-2">
 						<TabsTrigger className="bg-gray-200 hover:bg-gray-300 hover:text-gray-600" value="sellers">
 							Ejecutivos ({details?.sellers?.length || 0})
 						</TabsTrigger>
 						<TabsTrigger className="bg-gray-200 hover:bg-gray-300 hover:text-gray-600" value="inboxes">
 							Bandejas ({details?.inboxes?.length || 0})
+						</TabsTrigger>
+						<TabsTrigger className="bg-gray-200 hover:bg-gray-300 hover:text-gray-600" value="forms">
+							Formularios
 						</TabsTrigger>
 					</TabsList>
 
@@ -449,6 +582,148 @@ export default function EditClient({ params }) {
 								<Plus className="" />
 							</Button>
 						</div>
+					</TabsContent>
+
+					<TabsContent value="forms" className="w-full p-2 flex flex-col gap-4">
+						{isEditingForm ? (
+							<div className="space-y-4">
+								<div className="flex justify-between items-center">
+									<h4 className="text-lg font-semibold">
+										{currentForm?.id ? "Editar formulario" : "Nuevo formulario"}
+									</h4>
+									<div className="flex gap-2">
+										<Button
+											type="button"
+											variant="outline"
+											onClick={() => {
+												setIsEditingForm(false);
+												setCurrentForm(null);
+											}}
+										>
+											Cancelar
+										</Button>
+										<Button
+											type="button"
+											onClick={handleSaveForm}
+											disabled={isLoading}
+										>
+											<Save className="size-4 mr-2" />
+											Guardar
+										</Button>
+									</div>
+								</div>
+
+								<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+									<Input
+										label="Nombre del formulario"
+										value={currentForm?.name || ""}
+										onChange={(e) => handleFormChange({
+											...currentForm,
+											name: e.target.value
+										})}
+										required
+									/>
+									<Input
+										label="Descripción"
+										value={currentForm?.description || ""}
+										onChange={(e) => handleFormChange({
+											...currentForm,
+											description: e.target.value
+										})}
+									/>
+								</div>
+
+								<FormBuilder
+									form={currentForm}
+									onFormChange={handleFormChange}
+									disabled={isLoading}
+								/>
+							</div>
+						) : (
+							<div className="space-y-4">
+								<div className="flex justify-between items-center">
+									<h4 className="text-lg font-semibold">Formularios del cliente</h4>
+									<Button
+										type="button"
+										onClick={handleNewForm}
+										disabled={isLoading}
+									>
+										<Plus className="size-4 mr-2" />
+										Nuevo formulario
+									</Button>
+								</div>
+
+								{clientForms.length > 0 ? (
+									<div className="space-y-3">
+										{clientForms.map((form) => (
+											<div
+												key={form.id}
+												className="flex items-center justify-between gap-4 p-4 border rounded-lg hover:bg-gray-50"
+											>
+												<div className="flex-1">
+													<div className="flex items-center gap-2">
+														<h5 className="font-medium">{form.name}</h5>
+														{form.active && (
+															<Badge variant="default" className="bg-green-100 text-green-800">
+																Activo
+															</Badge>
+														)}
+													</div>
+													{form.description && (
+														<p className="text-sm text-gray-500 mt-1">{form.description}</p>
+													)}
+													<p className="text-xs text-gray-400 mt-1">
+														{form.fields?.length || 0} campos configurados
+													</p>
+												</div>
+												<div className="flex gap-2">
+													<Button
+														variant="outline"
+														size="sm"
+														onClick={() => handleEditForm(form)}
+														disabled={isLoading}
+													>
+														Editar
+													</Button>
+													{!form.active && (
+														<Button
+															variant="outline"
+															size="sm"
+															onClick={() => handleActivateForm(form.id)}
+															disabled={isLoading}
+															className="text-green-600 hover:text-green-700"
+														>
+															Activar
+														</Button>
+													)}
+													<Button
+														variant="outline"
+														size="sm"
+														onClick={() => handleDeleteForm(form.id)}
+														disabled={isLoading}
+														className="text-red-600 hover:text-red-700"
+													>
+														<Trash2 className="size-3" />
+													</Button>
+												</div>
+											</div>
+										))}
+									</div>
+								) : (
+									<div className="text-center py-8">
+										<p className="text-gray-500 mb-4">No hay formularios creados para este cliente</p>
+										<Button
+											type="button"
+											onClick={handleNewForm}
+											disabled={isLoading}
+										>
+											<Plus className="size-4 mr-2" />
+											Crear primer formulario
+										</Button>
+									</div>
+								)}
+							</div>
+						)}
 					</TabsContent>
 				</Tabs>
 			</div>

@@ -6,11 +6,11 @@ const Input = React.forwardRef(({ className, type, size, label, ...props }, ref)
 	return (
 		<div className="flex flex-col flex-1 justify-start gap-1 w-full">
 			{label && (
-				<label
+				<div
 					className={cn("text-sm font-medium text-muted-foreground", size === "sm" ? "text-xs" : "text-sm")}
 				>
 					{label}
-				</label>
+				</div>
 			)}
 
 			<input

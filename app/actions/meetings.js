@@ -59,6 +59,7 @@ export async function updateMeeting(formData) {
 	const inbox = formData.inbox || null;
 	const held = formData.held;
 	const validated = formData.validated;
+	const additionalFields = formData.additionalFields || null;
 
 	const url = `/meetings/${id}`;
 
@@ -73,10 +74,11 @@ export async function updateMeeting(formData) {
 		inboxId: inbox || null,
 		held,
 		validated,
+		additionalFields,
 	};
 
 	Object.keys(body).forEach((key) => {
-		if (body[key] === null && key !== "held" && key !== "validated") {
+		if (body[key] === null && key !== "held" && key !== "validated" && key !== "additionalFields") {
 			delete body[key];
 		}
 	});
@@ -101,6 +103,8 @@ export async function createMeeting(formData) {
 	const prospectContactPhone = formData.prospectContactPhone || null;
 	const inbox = formData.inbox || null;
 	const channel = formData.channel;
+	const additionalFields = formData.additionalFields || null;
+	const generateGoogleMeetLink = formData.generateGoogleMeetLink;
 
 	const url = `/meetings/`;
 
@@ -117,6 +121,8 @@ export async function createMeeting(formData) {
 		prospectContactPhone,
 		inboxId: inbox || null,
 		channel,
+		additionalFields,
+		generateGoogleMeetLink
 	};
 
 	Object.keys(body).forEach((key) => {

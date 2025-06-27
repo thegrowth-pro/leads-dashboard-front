@@ -10,10 +10,12 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 
 // Componente principal PhoneInput
-const PhoneInput = React.forwardRef(({ className, onChange, ...props }, ref) => {
+const PhoneInput = React.forwardRef(({ className, onChange, label = "Teléfono contacto", ...props }, ref) => {
 	return (
 		<div className="flex flex-col gap-1 h-9 mb-6">
-			<label className="text-sm font-medium text-muted-foreground px-1"> Teléfono contacto</label>
+			{label && (
+				<div className="text-sm font-medium text-muted-foreground px-1">{label}</div>
+			)}
 			<RPNInput
 				ref={ref}
 				className={cn("flex items-center h-9", className)}
