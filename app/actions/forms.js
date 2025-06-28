@@ -27,8 +27,18 @@ export async function createForm(formData) {
 	return { data, error };
 }
 
+export async function fetchFormEditInfo(id) {
+	const { data, error } = await request(`/forms/${id}/edit-info`, "GET");
+	return { data, error };
+}
+
 export async function updateForm(id, formData) {
 	const { data, error } = await request(`/forms/${id}`, "PATCH", formData);
+	return { data, error };
+}
+
+export async function updateFormRestricted(id, formData) {
+	const { data, error } = await request(`/forms/${id}/restricted`, "PATCH", formData);
 	return { data, error };
 }
 

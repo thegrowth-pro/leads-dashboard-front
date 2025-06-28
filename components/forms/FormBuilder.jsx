@@ -87,7 +87,7 @@ function OptionsEditor({ options, onChange, disabled }) {
 	);
 }
 
-export default function FormBuilder({ form, onFormChange, disabled = false }) {
+export default function FormBuilder({ form, onFormChange, disabled = false, isRestricted = false }) {
 	const { toast } = useToast();
 	const [fields, setFields] = useState(form?.fields || []);
 	const [presets, setPresets] = useState([]);
@@ -191,31 +191,35 @@ export default function FormBuilder({ form, onFormChange, disabled = false }) {
 		<div className="space-y-4">
 			{/* Header con acciones */}
 			<div className="flex justify-between items-center">
-				<h3 className="text-lg font-semibold">Configuración de campos</h3>
-				<div className="flex gap-2">
-					<Button
-						type="button"
-						variant="outline"
-						onClick={() => setShowPresets(!showPresets)}
-						disabled={disabled}
-					>
-						<Plus className="w-4 h-4 mr-2" />
-						Usar preset
-					</Button>
-
-					<Button
-						type="button"
-						onClick={() => addField()}
-						disabled={disabled}
-					>
-						<Plus className="w-4 h-4 mr-2" />
-						Agregar campo
-					</Button>
+				<div className="flex flex-col">
+					<h3 className="text-lg font-semibold">Configuración de campos</h3>
 				</div>
+				{!isRestricted && (
+					<div className="flex gap-2">
+						<Button
+							type="button"
+							variant="outline"
+							onClick={() => setShowPresets(!showPresets)}
+							disabled={disabled}
+						>
+							<Plus className="w-4 h-4 mr-2" />
+							Usar preset
+						</Button>
+
+						<Button
+							type="button"
+							onClick={() => addField()}
+							disabled={disabled}
+						>
+							<Plus className="w-4 h-4 mr-2" />
+							Agregar campo
+						</Button>
+					</div>
+				)}
 			</div>
 
 			{/* Presets */}
-			{showPresets && (
+			{showPresets && !isRestricted && (
 				<div className="border border-gray-200 rounded-lg bg-white shadow-sm">
 					<div className="p-4 border-b border-gray-200">
 						<h4 className="text-base font-semibold">Campos predefinidos</h4>
@@ -247,31 +251,33 @@ export default function FormBuilder({ form, onFormChange, disabled = false }) {
 
 			<div className="space-y-3">
 				{fields.map((field, index) => (
-					<div key={`field-${index}`} className="relative border border-gray-200 rounded-lg bg-white shadow-sm">
+					<div key={`field-${index}`} className={`relative border rounded-lg shadow-sm border-gray-200 bg-white`}>
 						<div className="p-4">
 							<div className="grid grid-cols-12 gap-4 items-start">
-								<div className="col-span-1 flex flex-col gap-1">
-									<Button
-										type="button"
-										variant="ghost"
-										size="sm"
-										onClick={() => moveField(index, "up")}
-										disabled={disabled || index === 0}
-									>
-										<ArrowUp className="w-3 h-3" />
-									</Button>
-									<Button
-										type="button"
-										variant="ghost"
-										size="sm"
-										onClick={() => moveField(index, "down")}
-										disabled={disabled || index === fields.length - 1}
-									>
-										<ArrowDown className="w-3 h-3" />
-									</Button>
-								</div>
+								{!isRestricted && (
+									<div className="col-span-1 flex flex-col gap-1">
+										<Button
+											type="button"
+											variant="ghost"
+											size="sm"
+											onClick={() => moveField(index, "up")}
+											disabled={disabled || index === 0}
+										>
+											<ArrowUp className="w-3 h-3" />
+										</Button>
+										<Button
+											type="button"
+											variant="ghost"
+											size="sm"
+											onClick={() => moveField(index, "down")}
+											disabled={disabled || index === fields.length - 1}
+										>
+											<ArrowDown className="w-3 h-3" />
+										</Button>
+									</div>
+								)}
 
-								<div className="col-span-10 space-y-3">
+								<div className={`space-y-3 ${isRestricted ? 'col-span-12' : 'col-span-10'}`}>
 									<div className="grid grid-cols-1 md:grid-cols-2 gap-3">
 										<Input
 											label="Etiqueta"
@@ -280,17 +286,30 @@ export default function FormBuilder({ form, onFormChange, disabled = false }) {
 											disabled={disabled}
 											placeholder="Ej: Industria de la empresa"
 										/>
-										<div className="flex items-center space-x-2 pt-6">
-											<Checkbox
-												id={`required-${index}`}
-												checked={field.required}
-												onCheckedChange={(checked) => updateField(index, { required: checked })}
-												disabled={disabled}
-											/>
-											<label htmlFor={`required-${index}`} className="text-sm font-medium">
-												Campo obligatorio
-											</label>
-										</div>
+										{!isRestricted ? (
+											<div className="flex items-center space-x-2 pt-6">
+												<Checkbox
+													id={`required-${index}`}
+													checked={field.required}
+													onCheckedChange={(checked) => updateField(index, { required: checked })}
+													disabled={disabled}
+												/>
+												<label htmlFor={`required-${index}`} className="text-sm font-medium">
+													Campo obligatorio
+												</label>
+											</div>
+										) : (
+											<div className="flex items-center space-x-2 pt-6">
+												<Checkbox
+													id={`required-${index}`}
+													checked={field.required}
+													disabled={true}
+												/>
+												<label htmlFor={`required-${index}`} className="text-sm font-medium text-gray-500">
+													Campo obligatorio (no editable)
+												</label>
+											</div>
+										)}
 									</div>
 
 									<div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -299,19 +318,26 @@ export default function FormBuilder({ form, onFormChange, disabled = false }) {
 											value={field.type}
 											options={fieldTypes}
 											onChange={(value) => updateField(index, { type: value })}
-											disabled={disabled}
+											disabled={disabled || isRestricted}
 										/>
+										{isRestricted && (
+											<div className="pt-6">
+												<p className="text-xs text-gray-500 italic">
+													El tipo de campo no se puede modificar
+												</p>
+											</div>
+										)}
 									</div>
 
 									{field.type === "LIST" && (
 										<div>
 											<label className="text-sm font-medium mb-2 block">
-												Opciones
+												Opciones {isRestricted && <span className="text-gray-500">(no editables)</span>}
 											</label>
 											<OptionsEditor
 												options={field.options || []}
 												onChange={(options) => updateField(index, { options })}
-												disabled={disabled}
+												disabled={disabled || isRestricted}
 											/>
 										</div>
 									)}
@@ -335,26 +361,28 @@ export default function FormBuilder({ form, onFormChange, disabled = false }) {
 								</div>
 
 								{/* Acciones */}
-								<div className="col-span-1 flex flex-col gap-1">
-									<Button
-										type="button"
-										variant="ghost"
-										size="sm"
-										onClick={() => duplicateField(index)}
-										disabled={disabled}
-									>
-										<Copy className="w-3 h-3" />
-									</Button>
-									<Button
-										type="button"
-										variant="ghost"
-										size="sm"
-										onClick={() => removeField(index)}
-										disabled={disabled}
-									>
-										<Trash2 className="w-3 h-3 text-red-500" />
-									</Button>
-								</div>
+								{!isRestricted && (
+									<div className="col-span-1 flex flex-col gap-1">
+										<Button
+											type="button"
+											variant="ghost"
+											size="sm"
+											onClick={() => duplicateField(index)}
+											disabled={disabled}
+										>
+											<Copy className="w-3 h-3" />
+										</Button>
+										<Button
+											type="button"
+											variant="ghost"
+											size="sm"
+											onClick={() => removeField(index)}
+											disabled={disabled}
+										>
+											<Trash2 className="w-3 h-3 text-red-500" />
+										</Button>
+									</div>
+								)}
 							</div>
 						</div>
 					</div>
@@ -364,15 +392,22 @@ export default function FormBuilder({ form, onFormChange, disabled = false }) {
 			{fields.length === 0 && (
 				<div className="border-2 border-dashed border-gray-300 rounded-lg bg-gray-50">
 					<div className="flex flex-col items-center justify-center py-8">
-						<p className="text-gray-500 mb-4">No hay campos configurados</p>
-						<Button
-							type="button"
-							onClick={() => addField()}
-							disabled={disabled}
-						>
-							<Plus className="w-4 h-4 mr-2" />
-							Agregar primer campo
-						</Button>
+						<p className="text-gray-500 mb-4">
+							{isRestricted 
+								? "Este formulario no tiene campos configurados y no se pueden agregar nuevos campos porque tiene respuestas asociadas"
+								: "No hay campos configurados"
+							}
+						</p>
+						{!isRestricted && (
+							<Button
+								type="button"
+								onClick={() => addField()}
+								disabled={disabled}
+							>
+								<Plus className="w-4 h-4 mr-2" />
+								Agregar primer campo
+							</Button>
+						)}
 					</div>
 				</div>
 			)}

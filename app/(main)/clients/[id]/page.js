@@ -3,15 +3,7 @@
 import { useEffect, useState, use } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import {
-	fetchClientDetails,
-	updateClient,
-	deleteClient,
-	addClientSeller,
-	deleteClientSeller,
-	addClientInbox,
-	deleteClientInbox,
-} from "@/app/actions/clients";
+import { fetchClientDetails, updateClient, deleteClient, addClientSeller, deleteClientSeller, addClientInbox, deleteClientInbox } from "@/app/actions/clients";
 import { fetchPods } from "@/app/actions/pods";
 import { ListRestart, LoaderCircle, Plus, Trash2, X, Save } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -22,7 +14,7 @@ import Combobox from "@/components/ui/Combobox";
 import { useRouter } from "next/navigation";
 import Loading from "@/app/(main)/loading";
 import FormBuilder from "@/components/forms/FormBuilder";
-import { fetchFormsByClient, createForm, updateForm, activateForm, deleteForm } from "@/app/actions/forms";
+import { fetchFormsByClient, createForm, updateForm, updateFormRestricted, activateForm, deleteForm, fetchFormEditInfo } from "@/app/actions/forms";
 
 export default function EditClient({ params }) {
 	const unwrappedParams = use(params);
@@ -41,6 +33,7 @@ export default function EditClient({ params }) {
 	const [currentForm, setCurrentForm] = useState(null);
 	const [isEditingForm, setIsEditingForm] = useState(false);
 	const [activeTab, setActiveTab] = useState("sellers");
+	const [formEditInfo, setFormEditInfo] = useState(null);
 
 	// Fetch all pods for the select
 	useEffect(() => {
@@ -293,14 +286,24 @@ export default function EditClient({ params }) {
 			active: true,
 			fields: []
 		});
+		setFormEditInfo(null);
 		setIsEditingForm(true);
-		setActiveTab("forms"); // Asegurar que estemos en el tab de formularios
+		setActiveTab("forms");
 	};
 
-	const handleEditForm = (form) => {
+	const handleEditForm = async (form) => {
 		setCurrentForm(form);
 		setIsEditingForm(true);
-		setActiveTab("forms"); // Asegurar que estemos en el tab de formularios
+		setActiveTab("forms");
+		
+		if (form.id) {
+			const { data: editInfo, error } = await fetchFormEditInfo(form.id);
+			if (!error && editInfo) {
+				setFormEditInfo(editInfo);
+			}
+		} else {
+			setFormEditInfo(null);
+		}
 	};
 
 	const handleFormChange = (updatedForm) => {
@@ -319,14 +322,44 @@ export default function EditClient({ params }) {
 
 		setIsLoading(true);
 		try {
-			const { data, error } = currentForm.id 
-				? await updateForm(currentForm.id, currentForm)
-				: await createForm(currentForm);
+			let data, error;
+
+			if (currentForm.id) {
+
+				if (formEditInfo && formEditInfo.editType === 'restricted') {
+					const restrictedData = {
+						name: currentForm.name,
+						description: currentForm.description,
+						fields: currentForm.fields.map(field => ({
+							id: field.id,
+							label: field.label,
+							placeholder: field.placeholder,
+							helpText: field.helpText
+						}))
+					};
+					
+					const response = await updateFormRestricted(currentForm.id, restrictedData);
+					data = response.data;
+					error = response.error;
+				} else {
+					const response = await updateForm(currentForm.id, currentForm);
+					data = response.data;
+					error = response.error;
+				}
+			} else {
+				const response = await createForm(currentForm);
+				data = response.data;
+				error = response.error;
+			}
 
 			if (error) {
+				const errorMessage = error.statusCode === 400 && error.message?.includes('respuestas asociadas')
+					? "Este formulario tiene respuestas asociadas. Solo se pueden modificar nombres y descripciones."
+					: "No se pudo guardar el formulario";
+				
 				toast({
 					title: "Error",
-					description: "No se pudo guardar el formulario",
+					description: errorMessage,
 					variant: "destructive",
 				});
 			} else {
@@ -336,7 +369,8 @@ export default function EditClient({ params }) {
 					variant: "success",
 				});
 				setIsEditingForm(false);
-				setCurrentForm(null); // Resetear el formulario actual
+				setCurrentForm(null);
+				setFormEditInfo(null);
 				setRefreshDetails(!refreshDetails);
 			}
 		} catch (error) {
@@ -588,9 +622,16 @@ export default function EditClient({ params }) {
 						{isEditingForm ? (
 							<div className="space-y-4">
 								<div className="flex justify-between items-center">
-									<h4 className="text-lg font-semibold">
-										{currentForm?.id ? "Editar formulario" : "Nuevo formulario"}
-									</h4>
+									<div className="flex flex-col">
+										<h4 className="text-lg font-semibold">
+											{currentForm?.id ? "Editar formulario" : "Nuevo formulario"}
+										</h4>
+										{formEditInfo && formEditInfo.editType === 'restricted' && (
+											<p className="text-sm text-amber-600 bg-amber-50 px-2 py-1 rounded-md mt-1">
+												⚠️ Formulario con respuestas. Solo se pueden editar nombres y descripciones.
+											</p>
+										)}
+									</div>
 									<div className="flex gap-2">
 										<Button
 											type="button"
@@ -598,6 +639,7 @@ export default function EditClient({ params }) {
 											onClick={() => {
 												setIsEditingForm(false);
 												setCurrentForm(null);
+												setFormEditInfo(null);
 											}}
 										>
 											Cancelar
@@ -637,6 +679,7 @@ export default function EditClient({ params }) {
 									form={currentForm}
 									onFormChange={handleFormChange}
 									disabled={isLoading}
+									isRestricted={formEditInfo && formEditInfo.editType === 'restricted'}
 								/>
 							</div>
 						) : (
@@ -672,9 +715,16 @@ export default function EditClient({ params }) {
 													{form.description && (
 														<p className="text-sm text-gray-500 mt-1">{form.description}</p>
 													)}
-													<p className="text-xs text-gray-400 mt-1">
-														{form.fields?.length || 0} campos configurados
-													</p>
+													<div className="flex items-center gap-2 mt-1">
+														<p className="text-xs text-gray-400">
+															{form.fields?.length || 0} campos configurados
+														</p>
+														{form._count?.meetings > 0 && (
+															<span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">
+																{form._count.meetings} respuesta{form._count.meetings !== 1 ? 's' : ''}
+															</span>
+														)}
+													</div>
 												</div>
 												<div className="flex gap-2">
 													<Button
