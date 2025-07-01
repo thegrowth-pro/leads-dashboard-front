@@ -405,7 +405,6 @@ export default function MeetingDetails({ params }) {
 						value={details.prospectContactPhone}
 						onChange={(value) => handleChange("prospectContactPhone", value)}
 						defaultCountry={"CL"}
-						international
 					/>
 					<Input
 						label="Cargo de contacto"
@@ -446,7 +445,6 @@ export default function MeetingDetails({ params }) {
 					</div>
 				) : null}
 
-				{/* Campos adicionales */}
 				{initialMeeting?.form?.fields && initialMeeting.form.fields.length > 0 && (
 					<div className="space-y-4">
 						<div className="border-t pt-4">
@@ -454,7 +452,7 @@ export default function MeetingDetails({ params }) {
 							<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 								{initialMeeting.form.fields
 									.sort((a, b) => a.order - b.order)
-									.filter(field => field.label !== '¿Generar link de Google Meet?') // Excluir el campo Google Meet
+									.filter(field => field.label !== '¿Generar link de Google Meet?')
 									.map((field) => {
 										const value = dynamicFieldValues[field.id];
 										

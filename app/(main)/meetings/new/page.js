@@ -11,7 +11,7 @@ import { useRouter } from "next/navigation";
 import Loading from "@/app/(main)/loading";
 import { DatePicker } from "@/components/ui/DatePicker";
 import { SelectInput } from "@/components/ui/SelectInput";
-import { PhoneInput } from "@/components/ui/PhoneInput";
+import { PhoneInput, combinePhoneNumber, parsePhoneNumber } from "@/components/ui/PhoneInput";
 import { MultiSelect } from "@/components/ui/multi-select";
 import Combobox from "@/components/ui/Combobox";
 import useSessionStore from "@/app/store/session";
@@ -52,6 +52,7 @@ export default function NewMeeting() {
 	const [dynamicFieldValues, setDynamicFieldValues] = useState({});
 	const [dynamicFieldErrors, setDynamicFieldErrors] = useState({});
 	const router = useRouter();
+	const [prospectContactPhone, setProspectContactPhone] = useState("");
 
 	useEffect(() => {
 		const fetchOptions = async () => {
@@ -129,6 +130,14 @@ export default function NewMeeting() {
 			fetchOptions();
 		}
 	}, [details?.client]);
+
+	// Función para combinar el código de país y número cuando cambien los valores separados
+	useEffect(() => {
+		if (details?.prospectCountryCode && details?.prospectPhoneNumber) {
+			const fullPhone = combinePhoneNumber(details.prospectCountryCode, details.prospectPhoneNumber);
+			setProspectContactPhone(fullPhone);
+		}
+	}, [details?.prospectCountryCode, details?.prospectPhoneNumber]);
 
 	const handleSave = async (e) => {
 		e.preventDefault();
@@ -314,10 +323,29 @@ export default function NewMeeting() {
 
 				<div className="flex gap-3 flex-col sm:flex-row">
 					<PhoneInput
-						value={details?.prospectContactPhone}
-						onChange={(value) => handleChange("prospectContactPhone", value)}
-						defaultCountry={"CL"}
-						international
+						countryLabel="Código"
+						phoneLabel="Teléfono"
+						value={details?.prospectContactPhone || ""}
+						onChange={(fullPhoneNumber) => {
+							// Actualizar todo en una sola operación para evitar múltiples re-renders
+							if (fullPhoneNumber) {
+								const parsed = parsePhoneNumber(fullPhoneNumber);
+								setDetails(prevDetails => ({
+									...prevDetails,
+									prospectCountryCode: parsed.countryCode,
+									prospectPhoneNumber: parsed.phoneNumber,
+									prospectContactPhone: fullPhoneNumber
+								}));
+							} else {
+								setDetails(prevDetails => ({
+									...prevDetails,
+									prospectCountryCode: "",
+									prospectPhoneNumber: "",
+									prospectContactPhone: ""
+								}));
+							}
+						}}
+						defaultCountry="CL"
 					/>
 					<Input
 						label={<span>Cargo de contacto <span className="text-red-500">*</span></span>}
@@ -344,9 +372,8 @@ export default function NewMeeting() {
 							<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 								{activeForm.fields
 									.sort((a, b) => a.order - b.order)
-									.filter(field => field.label !== '¿Generar link de Google Meet?') // Excluir el campo Google Meet del formulario dinámico
+									.filter(field => field.label !== '¿Generar link de Google Meet?')
 									.map((field) => {
-										// Usar directamente el ID del campo como clave estable
 										const fieldKey = field.id;
 										
 										return (
@@ -365,7 +392,6 @@ export default function NewMeeting() {
 					</div>
 				)}
 
-				{/* Campo fijo de Google Meet - separado del formulario dinámico */}
 				<div className="border-t pt-4">
 					<div className="flex items-center space-x-2">
 						<Checkbox
@@ -381,8 +407,9 @@ export default function NewMeeting() {
 							¿Generar link de Google Meet?
 						</label>
 					</div>
+
 					<p className="text-xs text-gray-500 mt-1 ml-6">
-						Indica si se debe generar automáticamente un enlace de Google Meet para esta reunión
+						Desmarca esta casilla solo si el prospecto ya generó una cita con link de videollamada desde su correo.
 					</p>
 				</div>
 			</div>
