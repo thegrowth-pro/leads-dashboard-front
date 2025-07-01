@@ -5,6 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { fetchAdminDetails, updateAdmin, deleteAdmin } from "@/app/actions/admins";
 import { useToast } from "@/hooks/use-toast";
+import { useConfirmDialog } from "@/hooks/useConfirmDialog";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { useRouter } from "next/navigation";
 import { ListRestart, Trash2, Save } from "lucide-react";
 import Loading from "@/app/(main)/loading";
@@ -13,6 +15,7 @@ import { resetPassword } from "@/app/actions/accounts";
 export default function EditAdmin({ params }) {
 	const unwrappedParams = use(params);
 	const { toast } = useToast();
+	const { isOpen, dialogConfig, openDialog, closeDialog, handleConfirm } = useConfirmDialog();
 	const router = useRouter();
 	const [details, setDetails] = useState(null);
 	const [isLoading, setIsLoading] = useState(false);
@@ -67,26 +70,33 @@ export default function EditAdmin({ params }) {
 	};
 
 	// Handle deletion
-	const handleDelete = async () => {
-		if (unwrappedParams.id) {
-			setIsLoading(true);
-			const { error } = await deleteAdmin(unwrappedParams.id);
-			if (error) {
-				toast({
-					title: "Error",
-					description: "Ocurrió un error al eliminar el administrador",
-					variant: "destructive",
-				});
-				setIsLoading(false);
-			} else {
-				toast({
-					title: "Administrador eliminado correctamente",
-					variant: "success",
-				});
-				setIsLoading(false);
-				router.push("/admins");
+	const handleDelete = () => {
+		openDialog({
+			title: "Eliminar Administrador",
+			description: "¿Estás seguro de que deseas eliminar este administrador?",
+			confirmText: "Eliminar",
+			onConfirm: async () => {
+				if (unwrappedParams.id) {
+					setIsLoading(true);
+					const { error } = await deleteAdmin(unwrappedParams.id);
+					if (error) {
+						toast({
+							title: "Error",
+							description: "Ocurrió un error al eliminar el administrador",
+							variant: "destructive",
+						});
+						setIsLoading(false);
+					} else {
+						toast({
+							title: "Administrador eliminado correctamente",
+							variant: "success",
+						});
+						setIsLoading(false);
+						router.push("/admins");
+					}
+				}
 			}
-		}
+		});
 	};
 
 	// Handle form changes
@@ -177,6 +187,16 @@ export default function EditAdmin({ params }) {
 					<p className="hidden sm:flex">Guardar</p>
 				</Button>
 			</div>
+
+			{/* Modal de confirmación de eliminación */}
+			<ConfirmDialog
+				isOpen={isOpen}
+				onClose={closeDialog}
+				onConfirm={handleConfirm}
+				title={dialogConfig.title}
+				description={dialogConfig.description}
+				confirmText={dialogConfig.confirmText}
+			/>
 
 			{isLoading && <Loading />}
 		</div>

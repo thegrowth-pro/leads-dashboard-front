@@ -16,6 +16,8 @@ import { fetchUserDetails, updateUser, deleteUser } from "@/app/actions/users";
 import { fetchPods } from "@/app/actions/pods";
 import { ListRestart, LoaderCircle, Trash2, Save } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useConfirmDialog } from "@/hooks/useConfirmDialog";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { resetPassword } from "@/app/actions/accounts";
 import { useRouter } from "next/navigation";
 import Loading from "@/app/(main)/loading";
@@ -23,6 +25,7 @@ import Loading from "@/app/(main)/loading";
 export default function EditUser({ params }) {
 	const unwrappedParams = use(params);
 	const { toast } = useToast();
+	const { isOpen, dialogConfig, openDialog, closeDialog, handleConfirm } = useConfirmDialog();
 	const router = useRouter();
 	const [details, setDetails] = useState(null);
 	const [podOptions, setPodOptions] = useState([]);
@@ -101,23 +104,30 @@ export default function EditUser({ params }) {
 		setIsLoading(false);
 	};
 
-	const handleDelete = async () => {
-		setIsLoading(true);
-		const { error } = await deleteUser(unwrappedParams.id);
-		if (error) {
-			toast({
-				title: "Error",
-				description: "Ocurrió un error al eliminar el usuario",
-				variant: "destructive",
-			});
-		} else {
-			toast({
-				title: "Usuario eliminado correctamente",
-				variant: "success",
-			});
-			router.push("/users");
-		}
-		setIsLoading(false);
+	const handleDelete = () => {
+		openDialog({
+			title: "Eliminar Usuario",
+			description: "¿Estás seguro de que deseas eliminar este usuario?",
+			confirmText: "Eliminar",
+			onConfirm: async () => {
+				setIsLoading(true);
+				const { error } = await deleteUser(unwrappedParams.id);
+				if (error) {
+					toast({
+						title: "Error",
+						description: "Ocurrió un error al eliminar el usuario",
+						variant: "destructive",
+					});
+				} else {
+					toast({
+						title: "Usuario eliminado correctamente",
+						variant: "success",
+					});
+					router.push("/users");
+				}
+				setIsLoading(false);
+			}
+		});
 	};
 
 	const handleResetPassword = async () => {
@@ -266,6 +276,16 @@ export default function EditUser({ params }) {
 					<p className="hidden sm:flex">Guardar</p>
 				</Button>
 			</div>
+
+			{/* Modal de confirmación de eliminación */}
+			<ConfirmDialog
+				isOpen={isOpen}
+				onClose={closeDialog}
+				onConfirm={handleConfirm}
+				title={dialogConfig.title}
+				description={dialogConfig.description}
+				confirmText={dialogConfig.confirmText}
+			/>
 
 			{isLoading && <Loading />}
 		</div>

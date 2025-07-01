@@ -5,6 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Trash2, MessageSquare, Save } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useConfirmDialog } from "@/hooks/useConfirmDialog";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { updateMeeting, deleteMeeting, fetchMeetingDetails, addComment } from "@/app/actions/meetings";
 import { fetchClients, fetchSellers, fetchClientInboxes } from "@/app/actions/clients";
 import { fetchCountries } from "@/app/actions/countries";
@@ -43,6 +45,7 @@ const channelOptions = [
 
 export default function MeetingDetails({ params }) {
 	const { toast } = useToast();
+	const { isOpen, dialogConfig, openDialog, closeDialog, handleConfirm } = useConfirmDialog();
 	const { session } = useSessionStore();
 	const router = useRouter();
 
@@ -204,26 +207,33 @@ export default function MeetingDetails({ params }) {
 		}
 	};
 
-	const handleDelete = async () => {
-		if (unwrappedParams.id) {
-			setIsLoading(true);
-			const { error } = await deleteMeeting(unwrappedParams.id);
-			if (error) {
-				toast({
-					title: "Error",
-					description: "Ocurrió un error al eliminar la reunión",
-					variant: "destructive",
-				});
-				setIsLoading(false);
-			} else {
-				toast({
-					title: "Reunión eliminada correctamente",
-					variant: "success",
-				});
-				setIsLoading(false);
-				router.push("/meetings");
+	const handleDelete = () => {
+		openDialog({
+			title: "Eliminar Reunión",
+			description: "¿Estás seguro de que deseas eliminar esta reunión?",
+			confirmText: "Eliminar",
+			onConfirm: async () => {
+				if (unwrappedParams.id) {
+					setIsLoading(true);
+					const { error } = await deleteMeeting(unwrappedParams.id);
+					if (error) {
+						toast({
+							title: "Error",
+							description: "Ocurrió un error al eliminar la reunión",
+							variant: "destructive",
+						});
+						setIsLoading(false);
+					} else {
+						toast({
+							title: "Reunión eliminada correctamente",
+							variant: "success",
+						});
+						setIsLoading(false);
+						router.push("/meetings");
+					}
+				}
 			}
-		}
+		});
 	};
 
 	const handleChange = (field, value) => {
@@ -535,6 +545,16 @@ export default function MeetingDetails({ params }) {
 				comments={details.comments}
 				onAddComment={handleAddComment}
 				isLoading={isLoading || isSendingComment}
+			/>
+
+			{/* Modal de confirmación de eliminación */}
+			<ConfirmDialog
+				isOpen={isOpen}
+				onClose={closeDialog}
+				onConfirm={handleConfirm}
+				title={dialogConfig.title}
+				description={dialogConfig.description}
+				confirmText={dialogConfig.confirmText}
 			/>
 
 			{isLoading && <Loading />}

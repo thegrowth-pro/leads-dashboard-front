@@ -12,6 +12,8 @@ import { fetchPods } from "@/app/actions/pods";
 import BaseDataGrid from "@/components/ui/BaseDataGrid";
 import DataGridHeader from "@/components/ui/DataGridHeader";
 import { useToast } from "@/hooks/use-toast";
+import { useConfirmDialog } from "@/hooks/useConfirmDialog";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import useDebounce from "@/hooks/useDebounce";
 import { useRouter } from "next/navigation";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -32,6 +34,7 @@ import RescheduleModal from "./RescheduleModal";
 import Combobox from "@/components/ui/Combobox";
 export default function MeetingsPage() {
 	const { toast } = useToast();
+	const { isOpen, dialogConfig, openDialog, closeDialog, handleConfirm } = useConfirmDialog();
 	const { session } = useSessionStore();
 
 	const router = useRouter();
@@ -199,23 +202,30 @@ export default function MeetingsPage() {
 		router.push(`/meetings/${id}`);
 	};
 
-	const handleDelete = async (id) => {
-		setIsLoading(true);
-		const { error } = await deleteMeeting(id);
-		if (error) {
-			toast({
-				title: "Error",
-				description: "No se pudo eliminar la reunión",
-				variant: "destructive",
-			});
-		} else {
-			toast({
-				title: "Reunión eliminada correctamente",
-				variant: "success",
-			});
-			setData(data.filter((meeting) => meeting.id !== id));
-		}
-		setIsLoading(false);
+	const handleDelete = (id) => {
+		openDialog({
+			title: "Eliminar Reunión",
+			description: "¿Estás seguro de que deseas eliminar esta reunión?",
+			confirmText: "Eliminar",
+			onConfirm: async () => {
+				setIsLoading(true);
+				const { error } = await deleteMeeting(id);
+				if (error) {
+					toast({
+						title: "Error",
+						description: "No se pudo eliminar la reunión",
+						variant: "destructive",
+					});
+				} else {
+					toast({
+						title: "Reunión eliminada correctamente",
+						variant: "success",
+					});
+					setData(data.filter((meeting) => meeting.id !== id));
+				}
+				setIsLoading(false);
+			}
+		});
 	};
 
 	const handleUpdate = async (id, column, newValue) => {
@@ -343,6 +353,16 @@ export default function MeetingsPage() {
 					</DialogContent>
 				</Dialog>
 			)}
+
+			{/* Modal de confirmación de eliminación */}
+			<ConfirmDialog
+				isOpen={isOpen}
+				onClose={closeDialog}
+				onConfirm={handleConfirm}
+				title={dialogConfig.title}
+				description={dialogConfig.description}
+				confirmText={dialogConfig.confirmText}
+			/>
 		</div>
 	);
 }

@@ -4,10 +4,13 @@ import BaseDataGrid from "@/components/ui/BaseDataGrid";
 import DataGridHeader from "@/components/ui/DataGridHeader";
 import { fetchClients, deleteClient } from "@/app/actions/clients";
 import { useToast } from "@/hooks/use-toast";
+import { useConfirmDialog } from "@/hooks/useConfirmDialog";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import useDebounce from "@/hooks/useDebounce";
 import { useRouter } from "next/navigation";
 export default function ClientsPage() {
 	const { toast } = useToast();
+	const { isOpen, dialogConfig, openDialog, closeDialog, handleConfirm } = useConfirmDialog();
 	const router = useRouter();
 	const [data, setData] = useState([]);
 	const [isLoading, setIsLoading] = useState(true);
@@ -54,23 +57,30 @@ export default function ClientsPage() {
 		router.push(`/clients/${id}`);
 	};
 
-	const handleDelete = async (id) => {
-		setIsLoading(true);
-		const { error } = await deleteClient(id);
-		if (error) {
-			toast({
-				title: "Error",
-				description: "No se pudo eliminar el cliente",
-				variant: "destructive",
-			});
-		} else {
-			toast({
-				title: "Cliente eliminado correctamente",
-				variant: "success",
-			});
-			setData(data.filter((client) => client.id !== id));
-		}
-		setIsLoading(false);
+	const handleDelete = (id) => {
+		openDialog({
+			title: "Eliminar Cliente",
+			description: "¿Estás seguro de que deseas eliminar este cliente?",
+			confirmText: "Eliminar",
+			onConfirm: async () => {
+				setIsLoading(true);
+				const { error } = await deleteClient(id);
+				if (error) {
+					toast({
+						title: "Error",
+						description: "No se pudo eliminar el cliente",
+						variant: "destructive",
+					});
+				} else {
+					toast({
+						title: "Cliente eliminado correctamente",
+						variant: "success",
+					});
+					setData(data.filter((client) => client.id !== id));
+				}
+				setIsLoading(false);
+			}
+		});
 	};
 
 	return (
@@ -93,6 +103,16 @@ export default function ClientsPage() {
 					onNewClick={() => router.push("/clients/new")}
 				/>
 			</BaseDataGrid>
+
+			{/* Modal de confirmación de eliminación */}
+			<ConfirmDialog
+				isOpen={isOpen}
+				onClose={closeDialog}
+				onConfirm={handleConfirm}
+				title={dialogConfig.title}
+				description={dialogConfig.description}
+				confirmText={dialogConfig.confirmText}
+			/>
 		</div>
 	);
 }

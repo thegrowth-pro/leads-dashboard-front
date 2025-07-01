@@ -9,6 +9,8 @@ import { ListRestart, LoaderCircle, Plus, Trash2, X, Save } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
+import { useConfirmDialog } from "@/hooks/useConfirmDialog";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { resetPassword } from "@/app/actions/accounts";
 import Combobox from "@/components/ui/Combobox";
 import { useRouter } from "next/navigation";
@@ -19,6 +21,7 @@ import { fetchFormsByClient, createForm, updateForm, updateFormRestricted, activ
 export default function EditClient({ params }) {
 	const unwrappedParams = use(params);
 	const { toast } = useToast();
+	const { isOpen, dialogConfig, openDialog, closeDialog, handleConfirm } = useConfirmDialog();
 	const router = useRouter();
 	const [details, setDetails] = useState(null);
 	const [podOptions, setPodOptions] = useState([]);
@@ -115,26 +118,33 @@ export default function EditClient({ params }) {
 	};
 
 	// Manejo de eliminación
-	const handleDelete = async () => {
-		if (unwrappedParams.id) {
-			setIsLoading(true);
-			const { error } = await deleteClient(unwrappedParams.id);
-			if (error) {
-				toast({
-					title: "Error",
-					description: "Ocurrió un error al eliminar el cliente",
-					variant: "destructive",
-				});
-				setIsLoading(false);
-			} else {
-				toast({
-					title: "Cliente eliminado correctamente",
-					variant: "success",
-				});
-				setIsLoading(false);
-				router.push("/clients");
+	const handleDelete = () => {
+		openDialog({
+			title: "Eliminar Cliente",
+			description: "¿Estás seguro de que deseas eliminar este cliente?",
+			confirmText: "Eliminar",
+			onConfirm: async () => {
+				if (unwrappedParams.id) {
+					setIsLoading(true);
+					const { error } = await deleteClient(unwrappedParams.id);
+					if (error) {
+						toast({
+							title: "Error",
+							description: "Ocurrió un error al eliminar el cliente",
+							variant: "destructive",
+						});
+						setIsLoading(false);
+					} else {
+						toast({
+							title: "Cliente eliminado correctamente",
+							variant: "success",
+						});
+						setIsLoading(false);
+						router.push("/clients");
+					}
+				}
 			}
-		}
+		});
 	};
 
 	// Manejo de cambios en el formulario
@@ -172,25 +182,32 @@ export default function EditClient({ params }) {
 		}
 	};
 
-	const handleDeleteSeller = async (sellerId) => {
-		setIsLoading(true);
-		const { error } = await deleteClientSeller(sellerId);
+	const handleDeleteSeller = (sellerId) => {
+		openDialog({
+			title: "Eliminar Vendedor",
+			description: "¿Estás seguro de que deseas eliminar este vendedor?",
+			confirmText: "Eliminar",
+			onConfirm: async () => {
+				setIsLoading(true);
+				const { error } = await deleteClientSeller(sellerId);
 
-		if (error) {
-			toast({
-				title: "Error",
-				description: "Ocurrió un error al eliminar el vendedor",
-				variant: "destructive",
-			});
-			setIsLoading(false);
-		} else {
-			toast({
-				title: "Vendedor eliminado correctamente",
-				variant: "success",
-			});
-			setIsLoading(false);
-			setRefreshDetails(!refreshDetails);
-		}
+				if (error) {
+					toast({
+						title: "Error",
+						description: "Ocurrió un error al eliminar el vendedor",
+						variant: "destructive",
+					});
+					setIsLoading(false);
+				} else {
+					toast({
+						title: "Vendedor eliminado correctamente",
+						variant: "success",
+					});
+					setIsLoading(false);
+					setRefreshDetails(!refreshDetails);
+				}
+			}
+		});
 	};
 
 	const handleAddInbox = async () => {
@@ -219,25 +236,32 @@ export default function EditClient({ params }) {
 		}
 	};
 
-	const handleDeleteInbox = async (inboxId) => {
-		setIsLoading(true);
-		const { error } = await deleteClientInbox(inboxId);
+	const handleDeleteInbox = (inboxId) => {
+		openDialog({
+			title: "Eliminar Bandeja",
+			description: "¿Estás seguro de que deseas eliminar esta bandeja?",
+			confirmText: "Eliminar",
+			onConfirm: async () => {
+				setIsLoading(true);
+				const { error } = await deleteClientInbox(inboxId);
 
-		if (error) {
-			toast({
-				title: "Error",
-				description: "Ocurrió un error al eliminar la bandeja",
-				variant: "destructive",
-			});
-			setIsLoading(false);
-		} else {
-			toast({
-				title: "Bandeja eliminada correctamente",
-				variant: "success",
-			});
-			setIsLoading(false);
-			setRefreshDetails(!refreshDetails);
-		}
+				if (error) {
+					toast({
+						title: "Error",
+						description: "Ocurrió un error al eliminar la bandeja",
+						variant: "destructive",
+					});
+					setIsLoading(false);
+				} else {
+					toast({
+						title: "Bandeja eliminada correctamente",
+						variant: "success",
+					});
+					setIsLoading(false);
+					setRefreshDetails(!refreshDetails);
+				}
+			}
+		});
 	};
 
 	const handleResetClientPassword = async () => {
@@ -403,26 +427,33 @@ export default function EditClient({ params }) {
 		setIsLoading(false);
 	};
 
-	const handleDeleteForm = async (formId) => {
-		setIsLoading(true);
-		const { error } = await deleteForm(formId);
-		if (error) {
-			toast({
-				title: "Error",
-				description: error.statusCode === 400 
-					? "No se puede eliminar un formulario con reuniones asociadas"
-					: "No se pudo eliminar el formulario",
-				variant: "destructive",
-			});
-		} else {
-			toast({
-				title: "Formulario eliminado",
-				description: "El formulario se eliminó correctamente",
-				variant: "success",
-			});
-			setRefreshDetails(!refreshDetails);
-		}
-		setIsLoading(false);
+	const handleDeleteForm = (formId) => {
+		openDialog({
+			title: "Eliminar Formulario",
+			description: "¿Estás seguro de que deseas eliminar este formulario?",
+			confirmText: "Eliminar",
+			onConfirm: async () => {
+				setIsLoading(true);
+				const { error } = await deleteForm(formId);
+				if (error) {
+					toast({
+						title: "Error",
+						description: error.statusCode === 400 
+							? "No se puede eliminar un formulario con reuniones asociadas"
+							: "No se pudo eliminar el formulario",
+						variant: "destructive",
+					});
+				} else {
+					toast({
+						title: "Formulario eliminado",
+						description: "El formulario se eliminó correctamente",
+						variant: "success",
+					});
+					setRefreshDetails(!refreshDetails);
+				}
+				setIsLoading(false);
+			}
+		});
 	};
 
 	const disableSave = !details?.name || !details?.email || isLoading;
@@ -812,6 +843,16 @@ export default function EditClient({ params }) {
 					<p className="hidden sm:flex">Guardar</p>
 				</Button>
 			</div>
+
+			{/* Modal de confirmación de eliminación */}
+			<ConfirmDialog
+				isOpen={isOpen}
+				onClose={closeDialog}
+				onConfirm={handleConfirm}
+				title={dialogConfig.title}
+				description={dialogConfig.description}
+				confirmText={dialogConfig.confirmText}
+			/>
 
 			{isLoading && <Loading />}
 		</div>
