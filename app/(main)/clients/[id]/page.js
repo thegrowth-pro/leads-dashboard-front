@@ -63,6 +63,7 @@ export default function EditClient({ params }) {
 					name: data.name,
 					email: data.email,
 					assignedPod: data?.assignedPod?.id,
+					googleCalendarId: data?.googleCalendarId,
 					sellers: data?.sellers,
 					inboxes: data?.inboxes,
 				});
@@ -499,6 +500,43 @@ export default function EditClient({ params }) {
 						value={details?.assignedPod || ""}
 						onChange={(value) => handleChange("assignedPod", value)}
 					/>
+					<div className="flex flex-col gap-2">
+						<div className="flex gap-2">
+							<Input
+								name="googleCalendarId"
+								label="Google Calendar ID (personalizado)"
+								placeholder={
+									`Dejar vacío para usar el calendario por defecto del pod` 
+								}
+								value={
+									details?.googleCalendarId && 
+									details.googleCalendarId !== initialClient?.assignedPod?.googleCalendarId 
+										? details.googleCalendarId 
+										: ""
+								}
+								onChange={(e) => handleChange("googleCalendarId", e.target.value)}
+							/>
+							{details?.googleCalendarId && 
+							 initialClient?.assignedPod?.googleCalendarId && 
+							 details.googleCalendarId !== initialClient.assignedPod.googleCalendarId && (
+								<Button
+									type="button"
+									variant="outline"
+									size="sm"
+									className="self-end mb-1"
+									onClick={() => handleChange("googleCalendarId", "")}
+									title="Usar el calendario del pod"
+								>
+									<X className="size-4" />
+								</Button>
+							)}
+						</div>
+						{!initialClient?.assignedPod?.googleCalendarId && !details?.googleCalendarId && (
+							<div className="text-sm text-amber-600">
+								⚠️ Este cliente no tiene calendar ID (ni del pod ni personalizado). Agrégalo para poder agendar reuniones.
+							</div>
+						)}
+					</div>
 				</div>
 
 				<Tabs value={activeTab} onValueChange={setActiveTab} className="w-full bg-gray-100 rounded-md">

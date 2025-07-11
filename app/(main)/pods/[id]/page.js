@@ -62,6 +62,7 @@ export default function EditPod({ params }) {
 					id: data.id,
 					name: data.name,
 					manager: data.manager?.id,
+					googleCalendarId: data.googleCalendarId,
 					assignedSDRs: data.assignedSDRs,
 				});
 				setInitialPod(data);
@@ -207,6 +208,12 @@ export default function EditPod({ params }) {
 						items={managerOptions}
 						value={details?.manager || ""}
 						onChange={(value) => handleChange("manager", value)}
+					/>
+					<Input
+						name="googleCalendarId"
+						label="ID de Google Calendar"
+						value={details?.googleCalendarId || ""}
+						onChange={(e) => handleChange("googleCalendarId", e.target.value)}
 					/>
 				</div>
 

@@ -16,6 +16,7 @@ export default function NewPod() {
 	const [details, setDetails] = useState({
 		name: "",
 		manager: "",
+		googleCalendarId: "",
 	});
 	const [managerOptions, setManagerOptions] = useState([]);
 	const [isLoading, setIsLoading] = useState(false);
@@ -87,6 +88,12 @@ export default function NewPod() {
 						items={managerOptions}
 						value={details?.manager || ""}
 						onChange={(value) => handleChange("manager", value)}
+					/>
+					<Input
+						name="googleCalendarId"
+						label="ID de Google Calendar"
+						value={details?.googleCalendarId || ""}
+						onChange={(e) => handleChange("googleCalendarId", e.target.value)}
 					/>
 				</div>
 			</div>

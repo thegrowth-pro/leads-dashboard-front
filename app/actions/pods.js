@@ -28,12 +28,14 @@ export async function updatePod(formData) {
 	const id = formData.id;
 	const name = formData.name;
 	const manager = formData.manager;
+	const googleCalendarId = formData.googleCalendarId;
 
 	const url = `/pods/${id}`;
 
 	const { data, error } = await request(url, "PATCH", {
 		name,
 		managerId: manager || null,
+		googleCalendarId: googleCalendarId || null,
 	});
 
 	if (error) {
@@ -45,12 +47,14 @@ export async function updatePod(formData) {
 export async function createPod(formData) {
 	const name = formData.name;
 	const manager = formData.manager;
+	const googleCalendarId = formData.googleCalendarId;
 
 	const url = `/pods`;
 
 	const { data, error } = await request(url, "POST", {
 		name,
 		managerId: manager || null,
+		googleCalendarId: googleCalendarId || null,
 	});
 
 	if (error) {

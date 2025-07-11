@@ -55,7 +55,6 @@ export default function newClient() {
 		}
 	};
 
-	// Manejo de cambios en el formulario
 	const handleChange = (field, value) => {
 		setDetails((prevDetails) => ({
 			...prevDetails,
@@ -100,6 +99,17 @@ export default function newClient() {
 						value={details?.assignedPod || ""}
 						onChange={(value) => handleChange("assignedPod", value)}
 					/>
+					<div className="flex flex-col gap-2">
+						<Input
+							name="googleCalendarId"
+							label="Google Calendar ID (personalizado)"
+							placeholder={
+								`Dejar vacío para usar el calendario por defecto del pod`
+							}
+							value={details?.googleCalendarId || ""}
+							onChange={(e) => handleChange("googleCalendarId", e.target.value)}
+						/>
+					</div>
 				</div>
 			</div>
 
