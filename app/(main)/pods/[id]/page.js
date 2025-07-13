@@ -63,6 +63,7 @@ export default function EditPod({ params }) {
 					name: data.name,
 					manager: data.manager?.id,
 					googleCalendarId: data.googleCalendarId,
+					slackChannelId: data.slackChannelId,
 					assignedSDRs: data.assignedSDRs,
 				});
 				setInitialPod(data);
@@ -214,6 +215,15 @@ export default function EditPod({ params }) {
 						label="ID de Google Calendar"
 						value={details?.googleCalendarId || ""}
 						onChange={(e) => handleChange("googleCalendarId", e.target.value)}
+					/>
+				</div>
+				<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+					<Input
+						name="slackChannelId"
+						label="ID del Canal de Slack"
+						placeholder="Ej: C1234567890"
+						value={details?.slackChannelId || ""}
+						onChange={(e) => handleChange("slackChannelId", e.target.value)}
 					/>
 				</div>
 

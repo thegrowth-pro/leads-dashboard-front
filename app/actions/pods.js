@@ -29,6 +29,7 @@ export async function updatePod(formData) {
 	const name = formData.name;
 	const manager = formData.manager;
 	const googleCalendarId = formData.googleCalendarId;
+	const slackChannelId = formData.slackChannelId;
 
 	const url = `/pods/${id}`;
 
@@ -36,6 +37,7 @@ export async function updatePod(formData) {
 		name,
 		managerId: manager || null,
 		googleCalendarId: googleCalendarId || null,
+		slackChannelId: slackChannelId || null,
 	});
 
 	if (error) {
@@ -48,6 +50,7 @@ export async function createPod(formData) {
 	const name = formData.name;
 	const manager = formData.manager;
 	const googleCalendarId = formData.googleCalendarId;
+	const slackChannelId = formData.slackChannelId;
 
 	const url = `/pods`;
 
@@ -55,6 +58,7 @@ export async function createPod(formData) {
 		name,
 		managerId: manager || null,
 		googleCalendarId: googleCalendarId || null,
+		slackChannelId: slackChannelId || null,
 	});
 
 	if (error) {
@@ -78,7 +82,7 @@ export async function addIntegrant(podId, userId) {
 	const url = `/users/${userId}`;
 
 	const { data, error } = await request(url, "PATCH", {
-		podId,
+		assignedPodId: podId,
 	});
 
 	if (error) {
@@ -91,7 +95,7 @@ export async function removeIntegrant(userId) {
 	const url = `/users/${userId}`;
 
 	const { data, error } = await request(url, "PATCH", {
-		podId: null,
+		assignedPodId: null,
 	});
 
 	if (error) {
