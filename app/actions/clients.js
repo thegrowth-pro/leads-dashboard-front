@@ -42,6 +42,7 @@ export async function updateClient(formData) {
 	const email = formData.email;
 	const assignedPodId = formData?.assignedPod;
 	const googleCalendarId = formData.googleCalendarId;
+	const zapierException = formData.zapierException;
 
 	const url = `/clients/${id}`;
 
@@ -50,6 +51,7 @@ export async function updateClient(formData) {
 		email,
 		assignedPodId,
 		googleCalendarId: googleCalendarId || null,
+		zapierException: zapierException || false,
 	});
 
 	if (error) {
@@ -63,6 +65,7 @@ export async function createClient(formData) {
 	const email = formData.email;
 	const assignedPodId = formData?.assignedPod;
 	const googleCalendarId = formData.googleCalendarId;
+	const zapierException = formData.zapierException;
 
 	const url = `/clients`;
 
@@ -71,6 +74,7 @@ export async function createClient(formData) {
 		email,
 		assignedPodId: assignedPodId === "" ? null : assignedPodId,
 		googleCalendarId: googleCalendarId || null,
+		zapierException: zapierException || false,
 	});
 
 	if (error) {

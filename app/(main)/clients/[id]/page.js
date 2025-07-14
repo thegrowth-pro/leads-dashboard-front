@@ -3,6 +3,7 @@
 import { useEffect, useState, use } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { fetchClientDetails, updateClient, deleteClient, addClientSeller, deleteClientSeller, addClientInbox, deleteClientInbox } from "@/app/actions/clients";
 import { fetchPods } from "@/app/actions/pods";
 import { ListRestart, LoaderCircle, Plus, Trash2, X, Save } from "lucide-react";
@@ -64,6 +65,7 @@ export default function EditClient({ params }) {
 					email: data.email,
 					assignedPod: data?.assignedPod?.id,
 					googleCalendarId: data?.googleCalendarId,
+					zapierException: data?.zapierException,
 					sellers: data?.sellers,
 					inboxes: data?.inboxes,
 				});
@@ -472,74 +474,95 @@ export default function EditClient({ params }) {
 				<p className="text-muted-foreground">{initialClient?.email}</p>
 			</div>
 
-			<div className="flex flex-col gap-4 w-full px-4 h-full overflow-y-auto justify-start">
-				<div className="flex flex-col md:flex-row gap-4">
-					<Input
-						name="name"
-						label="Nombre"
-						placeholder="Ingrese el nombre"
-						value={details?.name || ""}
-						onChange={(e) => handleChange("name", e.target.value)}
-						required
-					/>
-					<Input
-						name="email"
-						label="Email"
-						placeholder="Ingrese el email"
-						type="email"
-						value={details?.email || ""}
-						onChange={(e) => handleChange("email", e.target.value)}
-						required
-					/>
-				</div>
-				<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-					<Combobox
-						label="Pod asignado"
-						placeholder="Selecciona un Pod"
-						items={podOptions}
-						value={details?.assignedPod || ""}
-						onChange={(value) => handleChange("assignedPod", value)}
-					/>
-					<div className="flex flex-col gap-2">
-						<div className="flex gap-2">
-							<Input
-								name="googleCalendarId"
-								label="Google Calendar ID (personalizado)"
-								placeholder={
-									`Dejar vacío para usar el calendario por defecto del pod` 
-								}
-								value={
-									details?.googleCalendarId && 
-									details.googleCalendarId !== initialClient?.assignedPod?.googleCalendarId 
-										? details.googleCalendarId 
-										: ""
-								}
-								onChange={(e) => handleChange("googleCalendarId", e.target.value)}
-							/>
-							{details?.googleCalendarId && 
-							 initialClient?.assignedPod?.googleCalendarId && 
-							 details.googleCalendarId !== initialClient.assignedPod.googleCalendarId && (
-								<Button
-									type="button"
-									variant="outline"
-									size="sm"
-									className="self-end mb-1"
-									onClick={() => handleChange("googleCalendarId", "")}
-									title="Usar el calendario del pod"
-								>
-									<X className="size-4" />
-								</Button>
+			<div className="flex flex-col w-full px-4 h-full overflow-y-auto">
+				<div className="flex flex-col gap-4">
+					<div className="flex flex-col md:flex-row gap-4">
+						<Input
+							name="name"
+							label="Nombre"
+							placeholder="Ingrese el nombre"
+							value={details?.name || ""}
+							onChange={(e) => handleChange("name", e.target.value)}
+							required
+						/>
+						<Input
+							name="email"
+							label="Email"
+							placeholder="Ingrese el email"
+							type="email"
+							value={details?.email || ""}
+							onChange={(e) => handleChange("email", e.target.value)}
+							required
+						/>
+					</div>
+					<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+						<Combobox
+							label="Pod asignado"
+							placeholder="Selecciona un Pod"
+							items={podOptions}
+							value={details?.assignedPod || ""}
+							onChange={(value) => handleChange("assignedPod", value)}
+						/>
+
+						{!details?.zapierException && (
+						<div className="flex flex-col gap-2">
+							<div className="flex gap-2">
+								<Input
+									name="googleCalendarId"
+									label="Google Calendar ID (personalizado)"
+									placeholder={
+										`Dejar vacío para usar el calendario por defecto del pod` 
+									}
+									value={
+										details?.googleCalendarId && 
+										details.googleCalendarId !== initialClient?.assignedPod?.googleCalendarId 
+											? details.googleCalendarId 
+											: ""
+									}
+									onChange={(e) => handleChange("googleCalendarId", e.target.value)}
+								/>
+								{details?.googleCalendarId && 
+								 initialClient?.assignedPod?.googleCalendarId && 
+								 details.googleCalendarId !== initialClient.assignedPod.googleCalendarId && (
+									<Button
+										type="button"
+										variant="outline"
+										size="sm"
+										className="self-end mb-1"
+										onClick={() => handleChange("googleCalendarId", "")}
+										title="Usar el calendario del pod"
+									>
+										<X className="size-4" />
+									</Button>
+								)}
+							</div>
+							{!initialClient?.assignedPod?.googleCalendarId && !details?.googleCalendarId && (
+								<div className="text-sm text-amber-600">
+									⚠️ Este cliente no tiene calendar ID (ni del pod ni personalizado). Agrégalo para poder agendar reuniones.
+								</div>
 							)}
 						</div>
-						{!initialClient?.assignedPod?.googleCalendarId && !details?.googleCalendarId && (
-							<div className="text-sm text-amber-600">
-								⚠️ Este cliente no tiene calendar ID (ni del pod ni personalizado). Agrégalo para poder agendar reuniones.
-							</div>
 						)}
+					</div>
+
+					<div className="flex flex-col flex-1 justify-start gap-1 w-full">
+						<div className="text-sm font-medium text-muted-foreground">
+							Usar Zapier (omitir flujo interno)
+						</div>
+						<div className="flex items-center space-x-2">
+							<Checkbox
+								id="zapierException"
+								checked={details?.zapierException || false}
+								onCheckedChange={(checked) => handleChange("zapierException", checked)}
+							/>
+							<p className="text-xs text-gray-500">
+								Si está marcado, las reuniones de este cliente se enviarán directamente a Zapier
+							</p>
+						</div>
 					</div>
 				</div>
 
-				<Tabs value={activeTab} onValueChange={setActiveTab} className="w-full bg-gray-100 rounded-md">
+				<Tabs value={activeTab} onValueChange={setActiveTab} className="w-full bg-gray-100 rounded-md mt-4">
 					<TabsList className="flex justify-between w-full gap-2 bg-gray-200 items-center p-2">
 						<TabsTrigger className="bg-gray-200 hover:bg-gray-300 hover:text-gray-600" value="sellers">
 							Ejecutivos ({details?.sellers?.length || 0})
@@ -552,7 +575,7 @@ export default function EditClient({ params }) {
 						</TabsTrigger>
 					</TabsList>
 
-					<TabsContent value="sellers" className="w-full p-2 flex flex-col gap-1 overflow-x-auto">
+					<TabsContent value="sellers" className="mt-0 w-full p-2 flex flex-col gap-1 overflow-x-auto">
 						{details?.sellers?.length ? (
 							details?.sellers?.map((seller) => (
 								<div
@@ -632,7 +655,7 @@ export default function EditClient({ params }) {
 							</Button>
 						</div>
 					</TabsContent>
-					<TabsContent value="inboxes" className="w-full p-2 flex flex-col gap-1">
+					<TabsContent value="inboxes" className="mt-0 w-full p-2 flex flex-col gap-1">
 						{details?.inboxes?.length ? (
 							details?.inboxes?.map((inbox) => (
 								<div
@@ -687,7 +710,7 @@ export default function EditClient({ params }) {
 						</div>
 					</TabsContent>
 
-					<TabsContent value="forms" className="w-full p-2 flex flex-col gap-4">
+					<TabsContent value="forms" className="mt-0 w-full p-2 flex flex-col gap-4">
 						{isEditingForm ? (
 							<div className="space-y-4">
 								<div className="flex justify-between items-center">
@@ -882,7 +905,6 @@ export default function EditClient({ params }) {
 				</Button>
 			</div>
 
-			{/* Modal de confirmación de eliminación */}
 			<ConfirmDialog
 				isOpen={isOpen}
 				onClose={closeDialog}
