@@ -43,10 +43,8 @@ export default function MeetingsPage() {
 	const router = useRouter();
 	const [data, setData] = useState([]);
 	const [isLoading, setIsLoading] = useState(true);
-	const [searchTerm, setSearchTerm] = useState("");
 	const [totalPages, setTotalPages] = useState(1);
 	const [page, setPage] = useState(1);
-	const debouncedSearchTerm = useDebounce(searchTerm, 300);
 	const [meetingToReschedule, setMeetingToReschedule] = useState(null);
 	const [rescheduleModalOpen, setRescheduleModalOpen] = useState(false);
 	const [refreshData, setRefreshData] = useState(false);
@@ -65,8 +63,12 @@ export default function MeetingsPage() {
 		endDate,
 		updateSelectedPod,
 		updateSelectedClient,
+		searchTerm,
+		setSearchTerm,
 		_hasHydrated,
 	} = useFilterStore();
+	
+	const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
 	// Define functions first
 	const handleCommentsClick = (row) => {
@@ -162,7 +164,7 @@ export default function MeetingsPage() {
 					});
 					// Refresh the data
 					const { data, error } = await fetchMeetings(
-						searchTerm,
+						debouncedSearchTerm,
 						selectedFilters,
 						page,
 						startDate,
@@ -263,7 +265,7 @@ export default function MeetingsPage() {
 		async function fetchData() {
 			setIsLoading(true);
 			const { data, count, error } = await fetchMeetings(
-				searchTerm,
+				debouncedSearchTerm,
 				selectedFilters,
 				page,
 				startDate,
