@@ -6,6 +6,7 @@ import {
 	updateMeetingValidatedStatus,
 	updateMeetingHeldStatus,
 	rescheduleMeeting,
+	addComment,
 } from "@/app/actions/meetings";
 import { fetchClients } from "@/app/actions/clients";
 import { fetchPods } from "@/app/actions/pods";
@@ -26,12 +27,14 @@ import {
 	DropdownMenuCheckboxItem,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ListFilter } from "lucide-react";
+import { ListFilter, MessageSquare } from "lucide-react";
 import useFilterStore from "@/app/store/filter";
 import useSessionStore from "@/app/store/session";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import RescheduleModal from "./RescheduleModal";
 import Combobox from "@/components/ui/Combobox";
+import CommentsModal from "@/components/CommentsModal";
+
 export default function MeetingsPage() {
 	const { toast } = useToast();
 	const { isOpen, dialogConfig, openDialog, closeDialog, handleConfirm } = useConfirmDialog();
@@ -49,6 +52,10 @@ export default function MeetingsPage() {
 	const [refreshData, setRefreshData] = useState(false);
 	const [clientOptions, setClientOptions] = useState([]);
 	const [podOptions, setPodOptions] = useState([]);
+	const [isCommentsModalOpen, setIsCommentsModalOpen] = useState(false);
+	const [selectedMeetingComments, setSelectedMeetingComments] = useState([]);
+	const [selectedMeetingId, setSelectedMeetingId] = useState(null);
+	const [isSendingComment, setIsSendingComment] = useState(false);
 	const {
 		selectedFilters,
 		updateFilter,
@@ -61,7 +68,69 @@ export default function MeetingsPage() {
 		_hasHydrated,
 	} = useFilterStore();
 
-	const columns = [
+	// Define functions first
+	const handleCommentsClick = (row) => {
+		setSelectedMeetingId(row.id);
+		setSelectedMeetingComments(row.comments || []);
+		setIsCommentsModalOpen(true);
+	};
+
+	const handleCloseCommentsModal = () => {
+		setIsCommentsModalOpen(false);
+		setSelectedMeetingId(null);
+		setSelectedMeetingComments([]);
+	};
+
+	const handleAddComment = async (commentText) => {
+		if (!selectedMeetingId || !commentText.trim()) return;
+		
+		setIsSendingComment(true);
+		const { error } = await addComment({ meetingId: selectedMeetingId, text: commentText });
+		
+		if (error) {
+			toast({
+				title: "Error al agregar comentario",
+				description: error.message || "Ocurrió un error al agregar el comentario",
+				variant: "destructive",
+			});
+		} else {
+			toast({
+				title: "Comentario agregado correctamente",
+				variant: "success",
+			});
+			
+			// Create new comment object to add to local state
+			const newComment = {
+				id: Math.random().toString(36).substring(2, 15),
+				text: commentText,
+				author: session?.isAdmin
+					? "ADMIN"
+					: session?.accountType === "EXTERNAL"
+					? "CLIENT"
+					: session?.role,
+				createdAt: new Date(),
+			};
+			
+			// Update local state
+			setSelectedMeetingComments([...selectedMeetingComments, newComment]);
+			
+			// Update the data array to reflect the new comment count
+			setData(prevData => 
+				prevData.map(meeting => 
+					meeting.id === selectedMeetingId 
+						? { 
+							...meeting, 
+							comments: [...(meeting.comments || []), newComment] 
+						}
+						: meeting
+				)
+			);
+		}
+		setIsSendingComment(false);
+	};
+
+	// Define all possible columns
+	const allColumns = [
 		{ header: "Cliente", accessor: "client.name", reschedule: true, rescheduleAccessor: "held" },
 		{ header: "País", accessor: "country.name", hideOnMobile: true },
 		{ header: "Fecha", accessor: "date", type: "date" },
@@ -118,8 +187,38 @@ export default function MeetingsPage() {
 				false: { label: "No", color: "red", value: false },
 			},
 		},
-		// { header: "Inbox", accessor: "inbox" },
+		{
+			header: "Comentarios",
+			accessor: "comments",
+			type: "custom",
+			className: "w-[120px] text-center",
+			render: (value, item) => (
+				<div className="flex justify-center">
+					<Button
+						variant="ghost"
+						size="sm"
+						onClick={(e) => {
+							e.stopPropagation();
+							handleCommentsClick(item);
+						}}
+						className="p-2 h-auto hover:bg-gray-100"
+					>
+						<div className="flex items-center gap-1">
+							<MessageSquare className="h-4 w-4 text-indigo-600" />
+							<span className="text-xs bg-indigo-100 text-indigo-600 rounded-full px-1.5 py-0.5 min-w-[20px] text-center">
+								{value?.length || 0}
+							</span>
+						</div>
+					</Button>
+				</div>
+			),
+		},
 	];
+
+	// Filter columns based on user type
+	const columns = session?.accountType === "EXTERNAL" 
+		? allColumns.filter(col => col.accessor !== "held" && col.accessor !== "validated")
+		: allColumns;
 
 	const filters = [
 		{
@@ -352,6 +451,16 @@ export default function MeetingsPage() {
 						/>
 					</DialogContent>
 				</Dialog>
+			)}
+
+			{isCommentsModalOpen && selectedMeetingId && (
+				<CommentsModal
+					isOpen={isCommentsModalOpen}
+					onClose={handleCloseCommentsModal}
+					comments={selectedMeetingComments}
+					onAddComment={handleAddComment}
+					isLoading={isSendingComment}
+				/>
 			)}
 
 			{/* Modal de confirmación de eliminación */}
