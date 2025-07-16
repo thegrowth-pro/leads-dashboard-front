@@ -19,6 +19,7 @@ import { formatDatetoISO } from "@/lib/utils";
 import DynamicField from "@/components/forms/DynamicField";
 import { fetchActiveFormByClient } from "@/app/actions/forms";
 import { Checkbox } from "@/components/ui/checkbox";
+import WorkflowStatus from "@/components/WorkflowStatus";
 const channelOptions = [
 	{ value: "EMAIL", name: "Email" },
 	{ value: "CALL", name: "Llamada" },
@@ -234,9 +235,12 @@ export default function NewMeeting() {
 
 	return (
 		<div className="flex flex-col gap-4 pt-4 w-full h-full">
-			<div className="flex flex-col px-4 pb-4 border-b border-gray-300">
-				<h2 className="text-xl font-semibold">Nueva reunión</h2>
-				<p className="text-muted-foreground">Ingresa los siguientes campos para crear una nueva reunión</p>
+			<div className="flex justify-between items-end px-4 pb-4 border-b border-gray-300">
+				<div className="flex flex-col">
+					<h2 className="text-xl font-semibold">Nueva reunión</h2>
+					<p className="text-muted-foreground">Ingresa los siguientes campos para crear una nueva reunión</p>
+				</div>
+				<WorkflowStatus />
 			</div>
 
 			<div className="flex flex-col gap-4 w-full px-4 h-full overflow-y-auto justify-start">

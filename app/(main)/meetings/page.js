@@ -217,10 +217,8 @@ export default function MeetingsPage() {
 		},
 	];
 
-	// Filter columns based on user type
-	const columns = session?.accountType === "EXTERNAL" 
-		? allColumns.filter(col => col.accessor !== "held" && col.accessor !== "validated")
-		: allColumns;
+	// Show all columns for all users (no filtering)
+	const columns = allColumns;
 
 	const filters = [
 		{
