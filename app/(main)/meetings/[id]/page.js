@@ -94,7 +94,6 @@ export default function MeetingDetails({ params }) {
 					router.push("/not-found");
 				}
 				data.comments = data?.comments ? data.comments.reverse() : [];
-				console.log(data.validated, data.held);
 				setDetails({
 					id: data?.id || null,
 					pod: data?.pod?.id || null,
@@ -187,7 +186,6 @@ export default function MeetingDetails({ params }) {
 			additionalFields: Object.keys(dynamicFieldValues).length > 0 ? dynamicFieldValues : null
 		};
 		
-		console.log(updatedDetails);
 		const { data, error } = await updateMeeting(updatedDetails);
 
 		if (error) {
@@ -313,8 +311,6 @@ export default function MeetingDetails({ params }) {
 	if (isLoading || !details || !initialMeeting) {
 		return <Loading />;
 	}
-
-	console.log(details);
 
 	return (
 		<div className="flex flex-col gap-4 pt-4 w-full h-full">

@@ -100,7 +100,6 @@ export default function FormBuilder({ form, onFormChange, disabled = false, isRe
 	useEffect(() => {
 		const fetchPresets = async () => {
 			const { data, error } = await fetchFormPresets();
-            console.log(data, error)
 			if (!error) {
 				setPresets(data);
 			}
