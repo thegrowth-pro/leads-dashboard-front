@@ -101,6 +101,18 @@ export default function newClient() {
 						onChange={(value) => handleChange("assignedPod", value)}
 					/>
 
+					<Input
+						name="meetingLength"
+						label="Duración de reuniones (minutos)"
+						placeholder="45"
+						type="number"
+						min="0"
+						max="180"
+						step="5"
+						value={details?.meetingLength === undefined ? "" : details.meetingLength}
+						onChange={(e) => handleChange("meetingLength", parseInt(e.target.value))}
+					/>
+
 					{!details?.zapierException && (
 					<div className="flex flex-col gap-2">
 						<Input

@@ -66,6 +66,7 @@ export default function EditClient({ params }) {
 					assignedPod: data?.assignedPod?.id,
 					googleCalendarId: data?.googleCalendarId,
 					zapierException: data?.zapierException,
+					meetingLength: data?.meetingLength || 45,
 					sellers: data?.sellers,
 					inboxes: data?.inboxes,
 				});
@@ -502,6 +503,18 @@ export default function EditClient({ params }) {
 							items={podOptions}
 							value={details?.assignedPod || ""}
 							onChange={(value) => handleChange("assignedPod", value)}
+						/>
+
+						<Input
+							name="meetingLength"
+							label="Duración de reuniones (minutos)"
+							placeholder="45"
+							type="number"
+							min="0"
+							max="180"
+							step="5"
+							value={details?.meetingLength === undefined ? "" : details.meetingLength}
+							onChange={(e) => handleChange("meetingLength", parseInt(e.target.value))}
 						/>
 
 						{!details?.zapierException && (
