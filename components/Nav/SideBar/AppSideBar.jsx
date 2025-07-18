@@ -38,7 +38,8 @@ export default function AppSideBar({ user }) {
 			title: "Clientes",
 			path: "/clients",
 			icon: BriefcaseBusiness,
-			show: ["ADMIN"].includes(user?.accountType),
+			show:
+				["ADMIN"].includes(user?.accountType) || user?.role === "MANAGER",
 		},
 		{ title: "Equipo", path: "/users", icon: Users2, show: ["ADMIN"].includes(user?.accountType) },
 

@@ -20,7 +20,15 @@ const protectedRoutes = [
 	"/*",
 ];
 const externalRoutes = ["/meetings", "/meetings/*"];
-const internalRoutes = ["/dashboard", "/", "/meetings", "/meetings/*"];
+const internalRoutes = [
+	"/dashboard",
+	"/",
+	"/meetings",
+	"/meetings/*",
+	"/clients",
+	"/clients/*",
+	"/clients/new",
+];
 const publicRoutes = ["/login"];
 const accountTypes = { EXTERNAL: externalRoutes, INTERNAL: internalRoutes, ADMIN: protectedRoutes };
 
@@ -65,6 +73,13 @@ export default async function middleware(req) {
 	}
 
 	const accountType = response.data?.accountType;
+	const userRole = response.data?.role;
+
+	// Specific rule: allow only MANAGERs within INTERNAL account type to access clients routes
+	const isClientsRoute = path === "/clients" || path.startsWith("/clients/") || path === "/clients/new";
+	if (accountType === "INTERNAL" && isClientsRoute && userRole !== "MANAGER") {
+		return NextResponse.redirect(new URL("/meetings", req.nextUrl));
+	}
 
 	if (isProtectedRoute && accountType && !accountTypes[accountType]?.includes(path)) {
 		return NextResponse.redirect(new URL("/meetings", req.nextUrl));
