@@ -5,7 +5,7 @@ import { cookies } from "next/headers";
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
 
 async function makeRequest(endpoint, options = {}) {
-	const cookieStore = cookies();
+	const cookieStore = await cookies();
 	const sessionCookie = cookieStore.get("connect.sid");
 
 	const config = {
