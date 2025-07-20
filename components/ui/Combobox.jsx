@@ -44,9 +44,9 @@ const Combobox = ({
 	return (
 		<div className={cn(defaultStyles.container, className)}>
 			{label && (
-				<label className={cn(defaultStyles.label, labelClassName)} htmlFor="combobox-trigger">
+				<div className={cn(defaultStyles.label, labelClassName)}>
 					{label}
-				</label>
+				</div>
 			)}
 			<Popover open={open} onOpenChange={setOpen} modal={true}>
 				<PopoverTrigger asChild className="w-full">

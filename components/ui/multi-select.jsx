@@ -45,7 +45,7 @@ const MultiSelect = ({
 
 	return (
 		<div className={cn("flex flex-col relative hover:bg-none gap-1", className)} ref={ref}>
-			<label className={`text-sm font-medium text-muted-foreground px-1 ${labelClassName}`}>{label}</label>
+			<div className={`text-sm font-medium text-muted-foreground px-1 ${labelClassName}`}>{label}</div>
 			<Button
 				type="button"
 				variant="outline"

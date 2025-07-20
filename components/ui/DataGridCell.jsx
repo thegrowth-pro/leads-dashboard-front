@@ -103,15 +103,28 @@ const DataGridCell = ({ column, value, item, user, onUpdate, onReschedule }) => 
 			return <Chip color={column.options[value]}>{column.options[value]?.label || value}</Chip>;
 
 		case "button":
+			const isExternalUser = user?.accountType === "EXTERNAL";
+			const canInteract = !isExternalUser && (user?.accountType === "ADMIN" || user?.role === "MANAGER");
+			
 			return isEditing ? (
 				<div className="flex justify-center">
 					<LoaderCircle className="h-5 w-5 animate-spin text-gray-500 text-center" />
 				</div>
 			) : (
 				<div className="flex justify-center items-center gap-1">
-					<DropdownMenu open={isDropdownOpen} onOpenChange={setIsDropdownOpen}>
-						<DropdownMenuTrigger asChild>
-							<Chip variant="outline" color={column.options[value].color} className="border-0 w-full">
+					<DropdownMenu 
+						open={canInteract ? isDropdownOpen : false} 
+						onOpenChange={canInteract ? setIsDropdownOpen : () => {}}
+					>
+						<DropdownMenuTrigger asChild disabled={!canInteract}>
+							<Chip 
+								variant="outline" 
+								color={column.options[value].color} 
+								className={cn(
+									"border-0 w-full",
+									!canInteract && "cursor-not-allowed opacity-75"
+								)}
+							>
 								{column.options[value].label}
 							</Chip>
 						</DropdownMenuTrigger>

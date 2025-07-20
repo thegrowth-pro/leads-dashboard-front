@@ -25,13 +25,15 @@ export default async function TopBarUser() {
 				</p>
 			</div>
 			<div className="flex items-center justify-center gap-2 rounded-full w-10 h-10 bg-primary text-white">
-				{session.name
+				{session?.name
 					? session.name
 							.trim()
 							.split(" ")
 							.map((n) => n[0].toUpperCase())
 							.join("")
-					: session.email[0].toUpperCase()}
+					: session?.email 
+						? session.email[0].toUpperCase()
+						: "?"}
 			</div>
 		</div>
 	);

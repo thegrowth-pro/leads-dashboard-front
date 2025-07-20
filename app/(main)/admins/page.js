@@ -3,6 +3,8 @@ import { useState, useEffect } from "react";
 
 import { fetchAdmins, deleteAdmin } from "@/app/actions/admins";
 import { useToast } from "@/hooks/use-toast";
+import { useConfirmDialog } from "@/hooks/useConfirmDialog";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import useDebounce from "@/hooks/useDebounce";
 import { useRouter } from "next/navigation";
 import BaseDataGrid from "@/components/ui/BaseDataGrid";
@@ -10,6 +12,7 @@ import DataGridHeader from "@/components/ui/DataGridHeader";
 
 export default function UsersPage() {
 	const { toast } = useToast();
+	const { isOpen, dialogConfig, openDialog, closeDialog, handleConfirm } = useConfirmDialog();
 	const router = useRouter();
 	const [data, setData] = useState([]);
 	const [isLoading, setIsLoading] = useState(true);
@@ -39,23 +42,30 @@ export default function UsersPage() {
 		router.push(`/admins/${id}`);
 	};
 
-	const handleDelete = async (id) => {
-		setIsLoading(true);
-		const { error } = await deleteAdmin(id);
-		if (error) {
-			toast({
-				title: "Error",
-				description: "No se pudo eliminar el administrador",
-				variant: "destructive",
-			});
-		} else {
-			toast({
-				title: "Administrador eliminado correctamente",
-				variant: "success",
-			});
-			setData(data.filter((admin) => admin.id !== id));
-		}
-		setIsLoading(false);
+	const handleDelete = (id) => {
+		openDialog({
+			title: "Eliminar Administrador",
+			description: "¿Estás seguro de que deseas eliminar este administrador?",
+			confirmText: "Eliminar",
+			onConfirm: async () => {
+				setIsLoading(true);
+				const { error } = await deleteAdmin(id);
+				if (error) {
+					toast({
+						title: "Error",
+						description: "No se pudo eliminar el administrador",
+						variant: "destructive",
+					});
+				} else {
+					toast({
+						title: "Administrador eliminado correctamente",
+						variant: "success",
+					});
+					setData(data.filter((admin) => admin.id !== id));
+				}
+				setIsLoading(false);
+			}
+		});
 	};
 
 	return (
@@ -78,6 +88,16 @@ export default function UsersPage() {
 					onNewClick={() => router.push("/admins/new")}
 				/>
 			</BaseDataGrid>
+
+			{/* Modal de confirmación de eliminación */}
+			<ConfirmDialog
+				isOpen={isOpen}
+				onClose={closeDialog}
+				onConfirm={handleConfirm}
+				title={dialogConfig.title}
+				description={dialogConfig.description}
+				confirmText={dialogConfig.confirmText}
+			/>
 		</div>
 	);
 }

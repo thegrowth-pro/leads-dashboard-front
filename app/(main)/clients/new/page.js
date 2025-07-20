@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { createClient } from "@/app/actions/clients";
 import { fetchPods } from "@/app/actions/pods";
 import { useToast } from "@/hooks/use-toast";
@@ -55,7 +56,6 @@ export default function newClient() {
 		}
 	};
 
-	// Manejo de cambios en el formulario
 	const handleChange = (field, value) => {
 		setDetails((prevDetails) => ({
 			...prevDetails,
@@ -100,6 +100,48 @@ export default function newClient() {
 						value={details?.assignedPod || ""}
 						onChange={(value) => handleChange("assignedPod", value)}
 					/>
+
+					<Input
+						name="meetingLength"
+						label="Duración de reuniones (minutos)"
+						placeholder="45"
+						type="number"
+						min="0"
+						max="180"
+						step="5"
+						value={details?.meetingLength === undefined ? "" : details.meetingLength}
+						onChange={(e) => handleChange("meetingLength", parseInt(e.target.value))}
+					/>
+
+					{!details?.zapierException && (
+					<div className="flex flex-col gap-2">
+						<Input
+							name="googleCalendarId"
+							label="Google Calendar ID (personalizado)"
+							placeholder={
+								`Dejar vacío para usar el calendario por defecto del pod`
+							}
+							value={details?.googleCalendarId || ""}
+							onChange={(e) => handleChange("googleCalendarId", e.target.value)}
+						/>
+					</div>
+					)}
+				</div>
+
+				<div className="flex flex-col flex-1 justify-start gap-1 w-full">
+					<div className="text-sm font-medium text-muted-foreground">
+						Usar Zapier (omitir flujo interno)
+					</div>
+					<div className="flex items-center space-x-2">
+						<Checkbox
+							id="zapierException"
+							checked={details?.zapierException || false}
+							onCheckedChange={(checked) => handleChange("zapierException", checked)}
+						/>
+						<p className="text-xs text-gray-500">
+							Si está marcado, las reuniones de este cliente se enviarán directamente a Zapier
+						</p>
+					</div>
 				</div>
 			</div>
 

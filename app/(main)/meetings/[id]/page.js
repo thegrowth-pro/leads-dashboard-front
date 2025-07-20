@@ -5,6 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Trash2, MessageSquare, Save } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useConfirmDialog } from "@/hooks/useConfirmDialog";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { updateMeeting, deleteMeeting, fetchMeetingDetails, addComment } from "@/app/actions/meetings";
 import { fetchClients, fetchSellers, fetchClientInboxes } from "@/app/actions/clients";
 import { fetchCountries } from "@/app/actions/countries";
@@ -20,6 +22,7 @@ import useSessionStore from "@/app/store/session";
 import { useRouter } from "next/navigation";
 import Loading from "@/app/(main)/loading";
 import CommentsModal from "@/components/CommentsModal";
+import DynamicField from "@/components/forms/DynamicField";
 
 const validatedOptionsList = [
 	{ name: "Pendiente", color: "yellow", value: null },
@@ -42,6 +45,7 @@ const channelOptions = [
 
 export default function MeetingDetails({ params }) {
 	const { toast } = useToast();
+	const { isOpen, dialogConfig, openDialog, closeDialog, handleConfirm } = useConfirmDialog();
 	const { session } = useSessionStore();
 	const router = useRouter();
 
@@ -59,6 +63,10 @@ export default function MeetingDetails({ params }) {
 	const [refreshDetails, setRefreshDetails] = useState(false);
 	const [isCommentsModalOpen, setIsCommentsModalOpen] = useState(false);
 	const [isSendingComment, setIsSendingComment] = useState(false);
+	
+	// Estados para campos dinámicos
+	const [dynamicFieldValues, setDynamicFieldValues] = useState({});
+	const [dynamicFieldErrors, setDynamicFieldErrors] = useState({});
 
 	// Fetch options data
 	useEffect(() => {
@@ -86,7 +94,6 @@ export default function MeetingDetails({ params }) {
 					router.push("/not-found");
 				}
 				data.comments = data?.comments ? data.comments.reverse() : [];
-				console.log(data.validated, data.held);
 				setDetails({
 					id: data?.id || null,
 					pod: data?.pod?.id || null,
@@ -113,6 +120,14 @@ export default function MeetingDetails({ params }) {
 					comments: data?.comments || [],
 				});
 				setInitialMeeting(data);
+				
+				// Inicializar valores de campos dinámicos
+				if (data?.additionalFields) {
+					setDynamicFieldValues(data.additionalFields);
+				} else {
+					setDynamicFieldValues({});
+				}
+				
 				setIsLoading(false);
 			}
 		};
@@ -140,9 +155,38 @@ export default function MeetingDetails({ params }) {
 		e.preventDefault();
 		if (!details) return;
 
+		// Validar campos dinámicos requeridos
+		const errors = {};
+		if (initialMeeting?.form?.fields) {
+			initialMeeting.form.fields.forEach(field => {
+				if (field.label !== '¿Generar link de Google Meet?') { // Excluir Google Meet de validación
+					const value = dynamicFieldValues[field.id];
+					if (field.required && (value === undefined || value === '' || value === null)) {
+						errors[field.id] = `${field.label} es obligatorio`;
+					}
+				}
+			});
+		}
+
+		if (Object.keys(errors).length > 0) {
+			setDynamicFieldErrors(errors);
+			toast({
+				title: "Error",
+				description: "Por favor completa todos los campos obligatorios",
+				variant: "destructive",
+			});
+			return;
+		}
+
 		setIsLoading(true);
-		console.log(details);
-		const { data, error } = await updateMeeting(details);
+		
+		// Incluir campos adicionales en los datos a enviar
+		const updatedDetails = {
+			...details,
+			additionalFields: Object.keys(dynamicFieldValues).length > 0 ? dynamicFieldValues : null
+		};
+		
+		const { data, error } = await updateMeeting(updatedDetails);
 
 		if (error) {
 			toast({
@@ -161,26 +205,33 @@ export default function MeetingDetails({ params }) {
 		}
 	};
 
-	const handleDelete = async () => {
-		if (unwrappedParams.id) {
-			setIsLoading(true);
-			const { error } = await deleteMeeting(unwrappedParams.id);
-			if (error) {
-				toast({
-					title: "Error",
-					description: "Ocurrió un error al eliminar la reunión",
-					variant: "destructive",
-				});
-				setIsLoading(false);
-			} else {
-				toast({
-					title: "Reunión eliminada correctamente",
-					variant: "success",
-				});
-				setIsLoading(false);
-				router.push("/meetings");
+	const handleDelete = () => {
+		openDialog({
+			title: "Eliminar Reunión",
+			description: "¿Estás seguro de que deseas eliminar esta reunión?",
+			confirmText: "Eliminar",
+			onConfirm: async () => {
+				if (unwrappedParams.id) {
+					setIsLoading(true);
+					const { error } = await deleteMeeting(unwrappedParams.id);
+					if (error) {
+						toast({
+							title: "Error",
+							description: "Ocurrió un error al eliminar la reunión",
+							variant: "destructive",
+						});
+						setIsLoading(false);
+					} else {
+						toast({
+							title: "Reunión eliminada correctamente",
+							variant: "success",
+						});
+						setIsLoading(false);
+						router.push("/meetings");
+					}
+				}
 			}
-		}
+		});
 	};
 
 	const handleChange = (field, value) => {
@@ -188,6 +239,23 @@ export default function MeetingDetails({ params }) {
 			...prevDetails,
 			[field]: value,
 		}));
+	};
+
+	// Manejo de cambios en campos dinámicos
+	const handleDynamicFieldChange = (fieldKey, value) => {
+		setDynamicFieldValues(prev => ({
+			...prev,
+			[fieldKey]: value
+		}));
+		
+		// Limpiar error si existe
+		if (dynamicFieldErrors[fieldKey]) {
+			setDynamicFieldErrors(prev => {
+				const newErrors = { ...prev };
+				delete newErrors[fieldKey];
+				return newErrors;
+			});
+		}
 	};
 
 	const handleAddComment = async (newComment) => {
@@ -243,8 +311,6 @@ export default function MeetingDetails({ params }) {
 	if (isLoading || !details || !initialMeeting) {
 		return <Loading />;
 	}
-
-	console.log(details);
 
 	return (
 		<div className="flex flex-col gap-4 pt-4 w-full h-full">
@@ -345,7 +411,6 @@ export default function MeetingDetails({ params }) {
 						value={details.prospectContactPhone}
 						onChange={(value) => handleChange("prospectContactPhone", value)}
 						defaultCountry={"CL"}
-						international
 					/>
 					<Input
 						label="Cargo de contacto"
@@ -385,6 +450,60 @@ export default function MeetingDetails({ params }) {
 						/>
 					</div>
 				) : null}
+
+				{initialMeeting?.form?.fields && initialMeeting.form.fields.length > 0 && (
+					<div className="space-y-4">
+						<div className="border-t pt-4">
+							<h3 className="text-lg font-semibold mb-4">Información adicional</h3>
+							<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+								{initialMeeting.form.fields
+									.sort((a, b) => a.order - b.order)
+									.filter(field => field.label !== '¿Generar link de Google Meet?')
+									.map((field) => {
+										const value = dynamicFieldValues[field.id];
+										
+										return (
+											<DynamicField
+												key={field.id}
+												field={field}
+												value={value}
+												onChange={handleDynamicFieldChange}
+												error={dynamicFieldErrors[field.id]}
+												disabled={session?.accountType === "EXTERNAL"}
+											/>
+										);
+									})}
+							</div>
+						</div>
+					</div>
+				)}
+
+				{/* Campo de Google Meet */}
+				{initialMeeting?.generateGoogleMeetLink !== undefined && (
+					<div className="border-t pt-4">
+						<div className="flex items-center space-x-2">
+							<input
+								type="checkbox"
+								id="generate_google_meet_link"
+								checked={Boolean(initialMeeting.generateGoogleMeetLink)}
+								disabled={true}
+								className="h-4 w-4 text-blue-600 border-gray-300 rounded"
+							/>
+							<label
+								htmlFor="generate_google_meet_link"
+								className="text-sm font-medium leading-none"
+							>
+								¿Generar link de Google Meet?
+							</label>
+						</div>
+						<p className="text-xs text-gray-500 mt-1 ml-6">
+							{initialMeeting.generateGoogleMeetLink 
+								? "Se generó automáticamente un enlace de Google Meet para esta reunión"
+								: "No se generó enlace de Google Meet para esta reunión"
+							}
+						</p>
+					</div>
+				)}
 			</div>
 
 			<div className="flex justify-between gap-4 w-full px-4 py-4 border-t border-gray-300 bg-background mt-auto">
@@ -422,6 +541,16 @@ export default function MeetingDetails({ params }) {
 				comments={details.comments}
 				onAddComment={handleAddComment}
 				isLoading={isLoading || isSendingComment}
+			/>
+
+			{/* Modal de confirmación de eliminación */}
+			<ConfirmDialog
+				isOpen={isOpen}
+				onClose={closeDialog}
+				onConfirm={handleConfirm}
+				title={dialogConfig.title}
+				description={dialogConfig.description}
+				confirmText={dialogConfig.confirmText}
 			/>
 
 			{isLoading && <Loading />}

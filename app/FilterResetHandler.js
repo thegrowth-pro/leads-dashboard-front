@@ -18,9 +18,22 @@ export default function FilterResetHandler() {
 
 		const { resetFilters, lastPath } = useFilterStore.getState();
 
-		if (pathname && lastPath && pathname !== lastPath) {
+		// Función para obtener la sección base de una ruta
+		const getBaseSection = (path) => {
+			if (!path) return '';
+			const segments = path.split('/').filter(Boolean);
+			return segments.length > 0 ? `/${segments[0]}` : '/';
+		};
+
+		const currentSection = getBaseSection(pathname);
+		const lastSection = getBaseSection(lastPath);
+
+		// Solo resetear filtros si cambiamos de sección completamente
+		// No resetear si navegamos dentro de la misma sección (ej: /meetings -> /meetings/123 -> /meetings)
+		if (pathname && lastPath && currentSection !== lastSection) {
 			resetFilters();
 		}
+		
 		useFilterStore.setState({ lastPath: pathname });
 	}, [pathname, mounted]);
 

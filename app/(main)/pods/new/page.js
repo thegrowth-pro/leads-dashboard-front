@@ -16,6 +16,8 @@ export default function NewPod() {
 	const [details, setDetails] = useState({
 		name: "",
 		manager: "",
+		googleCalendarId: "",
+		slackChannelId: "",
 	});
 	const [managerOptions, setManagerOptions] = useState([]);
 	const [isLoading, setIsLoading] = useState(false);
@@ -87,6 +89,21 @@ export default function NewPod() {
 						items={managerOptions}
 						value={details?.manager || ""}
 						onChange={(value) => handleChange("manager", value)}
+					/>
+					<Input
+						name="googleCalendarId"
+						label="ID de Google Calendar"
+						value={details?.googleCalendarId || ""}
+						onChange={(e) => handleChange("googleCalendarId", e.target.value)}
+					/>
+				</div>
+				<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+					<Input
+						name="slackChannelId"
+						label="ID del Canal de Slack"
+						placeholder="Ej: C1234567890"
+						value={details?.slackChannelId || ""}
+						onChange={(e) => handleChange("slackChannelId", e.target.value)}
 					/>
 				</div>
 			</div>

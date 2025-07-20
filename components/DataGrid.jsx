@@ -38,6 +38,8 @@ import { Checkbox } from "./ui/checkbox";
 import { Dialog, DialogHeader, DialogContent, DialogTitle, DialogDescription, DialogTrigger } from "./ui/dialog";
 
 import { useToast } from "@/hooks/use-toast";
+import { useConfirmDialog } from "@/hooks/useConfirmDialog";
+import { ConfirmDialog } from "./ui/ConfirmDialog";
 import useDebounce from "@/hooks/useDebounce";
 import PaginationComponent from "./ui/PaginationComponent";
 import { DatePicker } from "./ui/DatePicker";
@@ -68,6 +70,7 @@ const DataGrid = ({
 	rowClick = true,
 }) => {
 	const { toast } = useToast();
+	const { isOpen, dialogConfig, openDialog, closeDialog, handleConfirm } = useConfirmDialog();
 
 	const {
 		searchTerm,
@@ -172,28 +175,35 @@ const DataGrid = ({
 	};
 
 	// Manejo de eliminación
-	const handleDelete = async (id) => {
+	const handleDelete = (id) => {
 		setRowDropdownOpen(false);
-		setIsLoading(true);
-
-		if (id) {
-			const { error } = await deleteItemAction(id);
-			if (error) {
-				toast({
-					title: "Error",
-					description: `Ocurrió un error al eliminar el/la ${item}`,
-					variant: "destructive",
-				});
-				setIsLoading(false);
-			} else {
-				toast({
-					title: `${item} eliminado/a correctamente`,
-					variant: "success",
-				});
-				setIsLoading(false);
-				setRefreshData(!refreshData);
+		
+		openDialog({
+			title: `Eliminar ${item}`,
+			description: `¿Estás seguro de que deseas eliminar este/a ${item}?`,
+			confirmText: "Eliminar",
+			onConfirm: async () => {
+				setIsLoading(true);
+				if (id) {
+					const { error } = await deleteItemAction(id);
+					if (error) {
+						toast({
+							title: "Error",
+							description: `Ocurrió un error al eliminar el/la ${item}`,
+							variant: "destructive",
+						});
+						setIsLoading(false);
+					} else {
+						toast({
+							title: `${item} eliminado/a correctamente`,
+							variant: "success",
+						});
+						setIsLoading(false);
+						setRefreshData(!refreshData);
+					}
+				}
 			}
-		}
+		});
 	};
 
 	const handleChipClick = async (event, col, updateFunction = null, id, value) => {
@@ -782,6 +792,16 @@ const DataGrid = ({
 					</DialogContent>
 				</Dialog>
 			)}
+
+			{/* Modal de confirmación de eliminación */}
+			<ConfirmDialog
+				isOpen={isOpen}
+				onClose={closeDialog}
+				onConfirm={handleConfirm}
+				title={dialogConfig.title}
+				description={dialogConfig.description}
+				confirmText={dialogConfig.confirmText}
+			/>
 		</div>
 	);
 };

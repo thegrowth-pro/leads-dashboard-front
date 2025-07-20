@@ -4,6 +4,8 @@ import BaseDataGrid from "@/components/ui/BaseDataGrid";
 import DataGridHeader from "@/components/ui/DataGridHeader";
 import { fetchPods, deletePod } from "@/app/actions/pods";
 import { useToast } from "@/hooks/use-toast";
+import { useConfirmDialog } from "@/hooks/useConfirmDialog";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import useDebounce from "@/hooks/useDebounce";
 import { useRouter } from "next/navigation";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -21,6 +23,7 @@ import useFilterStore from "@/app/store/filter";
 
 export default function PodsPage() {
 	const { toast } = useToast();
+	const { isOpen, dialogConfig, openDialog, closeDialog, handleConfirm } = useConfirmDialog();
 	const router = useRouter();
 	const [data, setData] = useState([]);
 	const [isLoading, setIsLoading] = useState(true);
@@ -63,23 +66,30 @@ export default function PodsPage() {
 		router.push(`/pods/${id}`);
 	};
 
-	const handleDelete = async (id) => {
-		setIsLoading(true);
-		const { error } = await deletePod(id);
-		if (error) {
-			toast({
-				title: "Error",
-				description: "No se pudo eliminar el pod",
-				variant: "destructive",
-			});
-		} else {
-			toast({
-				title: "Pod eliminado correctamente",
-				variant: "success",
-			});
-			setData(data.filter((pod) => pod.id !== id));
-		}
-		setIsLoading(false);
+	const handleDelete = (id) => {
+		openDialog({
+			title: "Eliminar Pod",
+			description: "¿Estás seguro de que deseas eliminar este pod?",
+			confirmText: "Eliminar",
+			onConfirm: async () => {
+				setIsLoading(true);
+				const { error } = await deletePod(id);
+				if (error) {
+					toast({
+						title: "Error",
+						description: "No se pudo eliminar el pod",
+						variant: "destructive",
+					});
+				} else {
+					toast({
+						title: "Pod eliminado correctamente",
+						variant: "success",
+					});
+					setData(data.filter((pod) => pod.id !== id));
+				}
+				setIsLoading(false);
+			}
+		});
 	};
 
 	return (
@@ -102,6 +112,16 @@ export default function PodsPage() {
 					onNewClick={() => router.push("/pods/new")}
 				/>
 			</BaseDataGrid>
+
+			{/* Modal de confirmación de eliminación */}
+			<ConfirmDialog
+				isOpen={isOpen}
+				onClose={closeDialog}
+				onConfirm={handleConfirm}
+				title={dialogConfig.title}
+				description={dialogConfig.description}
+				confirmText={dialogConfig.confirmText}
+			/>
 		</div>
 	);
 }

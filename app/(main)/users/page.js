@@ -4,6 +4,8 @@ import BaseDataGrid from "@/components/ui/BaseDataGrid";
 import DataGridHeader from "@/components/ui/DataGridHeader";
 import { fetchUsers, deleteUser } from "@/app/actions/users";
 import { useToast } from "@/hooks/use-toast";
+import { useConfirmDialog } from "@/hooks/useConfirmDialog";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import useDebounce from "@/hooks/useDebounce";
 import { useRouter } from "next/navigation";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -20,6 +22,7 @@ import { ListFilter } from "lucide-react";
 import useFilterStore from "@/app/store/filter";
 export default function UsersPage() {
 	const { toast } = useToast();
+	const { isOpen, dialogConfig, openDialog, closeDialog, handleConfirm } = useConfirmDialog();
 	const router = useRouter();
 	const [data, setData] = useState([]);
 	const [isLoading, setIsLoading] = useState(true);
@@ -85,23 +88,30 @@ export default function UsersPage() {
 		router.push(`/users/${id}`);
 	};
 
-	const handleDelete = async (id) => {
-		setIsLoading(true);
-		const { error } = await deleteUser(id);
-		if (error) {
-			toast({
-				title: "Error",
-				description: "No se pudo eliminar el usuario",
-				variant: "destructive",
-			});
-		} else {
-			toast({
-				title: "Usuario eliminado correctamente",
-				variant: "success",
-			});
-			setData(data.filter((user) => user.id !== id));
-		}
-		setIsLoading(false);
+	const handleDelete = (id) => {
+		openDialog({
+			title: "Eliminar Usuario",
+			description: "¿Estás seguro de que deseas eliminar este usuario?",
+			confirmText: "Eliminar",
+			onConfirm: async () => {
+				setIsLoading(true);
+				const { error } = await deleteUser(id);
+				if (error) {
+					toast({
+						title: "Error",
+						description: "No se pudo eliminar el usuario",
+						variant: "destructive",
+					});
+				} else {
+					toast({
+						title: "Usuario eliminado correctamente",
+						variant: "success",
+					});
+					setData(data.filter((user) => user.id !== id));
+				}
+				setIsLoading(false);
+			}
+		});
 	};
 
 	return (
@@ -160,6 +170,16 @@ export default function UsersPage() {
 					</DropdownMenu>
 				</DataGridHeader>
 			</BaseDataGrid>
+
+			{/* Modal de confirmación de eliminación */}
+			<ConfirmDialog
+				isOpen={isOpen}
+				onClose={closeDialog}
+				onConfirm={handleConfirm}
+				title={dialogConfig.title}
+				description={dialogConfig.description}
+				confirmText={dialogConfig.confirmText}
+			/>
 		</div>
 	);
 }

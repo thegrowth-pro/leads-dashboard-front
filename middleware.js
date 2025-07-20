@@ -20,7 +20,15 @@ const protectedRoutes = [
 	"/*",
 ];
 const externalRoutes = ["/meetings", "/meetings/*"];
-const internalRoutes = ["/dashboard", "/", "/meetings", "/meetings/*"];
+const internalRoutes = [
+	"/dashboard",
+	"/",
+	"/meetings",
+	"/meetings/*",
+	"/clients",
+	"/clients/*",
+	"/clients/new",
+];
 const publicRoutes = ["/login"];
 const accountTypes = { EXTERNAL: externalRoutes, INTERNAL: internalRoutes, ADMIN: protectedRoutes };
 
@@ -31,17 +39,49 @@ export default async function middleware(req) {
 	const isProtectedRoute = protectedRoutes.includes(path);
 	const isPublicRoute = publicRoutes.includes(path);
 
-	const response = await request("/auth/check");
+	let response;
+	try {
+		response = await request("/auth/check");
+	} catch (error) {
+		console.error("Middleware: Error checking auth:", error);
+		// Si hay error en la autenticación y es una ruta protegida, redirigir al login
+		if (isProtectedRoute) {
+			await deleteSession();
+			return NextResponse.redirect(new URL("/login", req.nextUrl));
+		}
+		// Si es una ruta pública, permitir continuar
+		return NextResponse.next();
+	}
 
 	if (isProtectedRoute && response.status !== 200) {
 		await deleteSession();
 		return NextResponse.redirect(new URL("/login", req.nextUrl));
 	}
 
-	await createUserCookie(response.data);
-	const accountType = response.data?.accountType;
+	// Solo crear la cookie del usuario si tenemos datos válidos
+	if (response.data && typeof response.data === 'object') {
+		try {
+			await createUserCookie(response.data);
+		} catch (error) {
+			console.error("Middleware: Error creating user cookie:", error);
+			// Si no podemos crear la cookie del usuario y es una ruta protegida, redirigir al login
+			if (isProtectedRoute) {
+				await deleteSession();
+				return NextResponse.redirect(new URL("/login", req.nextUrl));
+			}
+		}
+	}
 
-	if (isProtectedRoute && !accountTypes[accountType].includes(path)) {
+	const accountType = response.data?.accountType;
+	const userRole = response.data?.role;
+
+	// Specific rule: allow only MANAGERs within INTERNAL account type to access clients routes
+	const isClientsRoute = path === "/clients" || path.startsWith("/clients/") || path === "/clients/new";
+	if (accountType === "INTERNAL" && isClientsRoute && userRole !== "MANAGER") {
+		return NextResponse.redirect(new URL("/meetings", req.nextUrl));
+	}
+
+	if (isProtectedRoute && accountType && !accountTypes[accountType]?.includes(path)) {
 		return NextResponse.redirect(new URL("/meetings", req.nextUrl));
 	}
 

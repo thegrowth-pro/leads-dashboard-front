@@ -25,7 +25,7 @@ export function SelectInput({
 }) {
 	return (
 		<div className={cn("flex flex-col", className)}>
-			<label className={`text-sm font-medium text-muted-foreground px-1 ${labelClassName}`}>{label}</label>
+			<div className={`text-sm font-medium text-muted-foreground px-1 ${labelClassName}`}>{label}</div>
 			<Select value={value} onValueChange={onChange} {...selectProps} disabled={disabled}>
 				<SelectTrigger
 					isLoading={isLoading}

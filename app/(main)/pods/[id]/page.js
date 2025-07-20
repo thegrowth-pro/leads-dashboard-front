@@ -8,6 +8,8 @@ import { fetchManagers, fetchSDRs } from "@/app/actions/users";
 import { ListRestart, LoaderCircle, Plus, Trash2, X, Save } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
+import { useConfirmDialog } from "@/hooks/useConfirmDialog";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { useRouter } from "next/navigation";
 import Combobox from "@/components/ui/Combobox";
 import Loading from "@/app/(main)/loading";
@@ -16,6 +18,7 @@ import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/
 export default function EditPod({ params }) {
 	const unwrappedParams = use(params);
 	const { toast } = useToast();
+	const { isOpen, dialogConfig, openDialog, closeDialog, handleConfirm } = useConfirmDialog();
 	const router = useRouter();
 	const [details, setDetails] = useState(null);
 	const [managerOptions, setManagerOptions] = useState([]);
@@ -59,6 +62,8 @@ export default function EditPod({ params }) {
 					id: data.id,
 					name: data.name,
 					manager: data.manager?.id,
+					googleCalendarId: data.googleCalendarId,
+					slackChannelId: data.slackChannelId,
 					assignedSDRs: data.assignedSDRs,
 				});
 				setInitialPod(data);
@@ -96,23 +101,30 @@ export default function EditPod({ params }) {
 		setIsLoading(false);
 	};
 
-	const handleDelete = async () => {
-		setIsLoading(true);
-		const { error } = await deletePod(unwrappedParams.id);
-		if (error) {
-			toast({
-				title: "Error",
-				description: "Ocurrió un error al eliminar el pod",
-				variant: "destructive",
-			});
-		} else {
-			toast({
-				title: "Pod eliminado correctamente",
-				variant: "success",
-			});
-			router.push("/pods");
-		}
-		setIsLoading(false);
+	const handleDelete = () => {
+		openDialog({
+			title: "Eliminar Pod",
+			description: "¿Estás seguro de que deseas eliminar este pod?",
+			confirmText: "Eliminar",
+			onConfirm: async () => {
+				setIsLoading(true);
+				const { error } = await deletePod(unwrappedParams.id);
+				if (error) {
+					toast({
+						title: "Error",
+						description: "Ocurrió un error al eliminar el pod",
+						variant: "destructive",
+					});
+				} else {
+					toast({
+						title: "Pod eliminado correctamente",
+						variant: "success",
+					});
+					router.push("/pods");
+				}
+				setIsLoading(false);
+			}
+		});
 	};
 
 	const handleAddIntegrant = async () => {
@@ -139,24 +151,31 @@ export default function EditPod({ params }) {
 		}
 	};
 
-	const handleRemoveIntegrant = async (userId) => {
-		setIsLoading(true);
-		const { error } = await removeIntegrant(userId);
-		if (error) {
-			toast({
-				title: "Error",
-				description: "Ocurrió un error al eliminar el integrante",
-				variant: "destructive",
-			});
-			setIsLoading(false);
-		} else {
-			toast({
-				title: "Integrante eliminado correctamente",
-				variant: "success",
-			});
-			setIsLoading(false);
-			setRefreshDetails(!refreshDetails);
-		}
+	const handleRemoveIntegrant = (userId) => {
+		openDialog({
+			title: "Remover Integrante",
+			description: "¿Estás seguro de que deseas remover este integrante del pod?",
+			confirmText: "Remover",
+			onConfirm: async () => {
+				setIsLoading(true);
+				const { error } = await removeIntegrant(userId);
+				if (error) {
+					toast({
+						title: "Error",
+						description: "Ocurrió un error al eliminar el integrante",
+						variant: "destructive",
+					});
+					setIsLoading(false);
+				} else {
+					toast({
+						title: "Integrante eliminado correctamente",
+						variant: "success",
+					});
+					setIsLoading(false);
+					setRefreshDetails(!refreshDetails);
+				}
+			}
+		});
 	};
 
 	const disableSave = !details?.name || isLoading;
@@ -190,6 +209,21 @@ export default function EditPod({ params }) {
 						items={managerOptions}
 						value={details?.manager || ""}
 						onChange={(value) => handleChange("manager", value)}
+					/>
+					<Input
+						name="googleCalendarId"
+						label="ID de Google Calendar"
+						value={details?.googleCalendarId || ""}
+						onChange={(e) => handleChange("googleCalendarId", e.target.value)}
+					/>
+				</div>
+				<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+					<Input
+						name="slackChannelId"
+						label="ID del Canal de Slack"
+						placeholder="Ej: C1234567890"
+						value={details?.slackChannelId || ""}
+						onChange={(e) => handleChange("slackChannelId", e.target.value)}
 					/>
 				</div>
 
@@ -265,6 +299,16 @@ export default function EditPod({ params }) {
 					<p className="hidden sm:flex">Guardar</p>
 				</Button>
 			</div>
+
+			{/* Modal de confirmación de eliminación */}
+			<ConfirmDialog
+				isOpen={isOpen}
+				onClose={closeDialog}
+				onConfirm={handleConfirm}
+				title={dialogConfig.title}
+				description={dialogConfig.description}
+				confirmText={dialogConfig.confirmText}
+			/>
 
 			{isLoading && <Loading />}
 		</div>
