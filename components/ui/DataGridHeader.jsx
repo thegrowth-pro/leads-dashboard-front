@@ -2,7 +2,7 @@
 import React from "react";
 import { Input } from "./input";
 import { Button } from "./button";
-import { PlusIcon, X, Calendar } from "lucide-react";
+import { PlusIcon, X, Calendar, FileDown } from "lucide-react";
 import useFilterStore from "@/app/store/filter";
 import Chip from "./chip";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "./dropdown-menu";
@@ -29,18 +29,22 @@ const DataGridHeader = ({
 	children,
 	clientOptions,
 	podOptions,
+	sdrOptions,
+	onExport,
 }) => {
 	const {
 		selectedFilters,
 		updateFilter,
 		selectedClient,
 		selectedPod,
+		selectedSdr,
 		startDate,
 		endDate,
 		updateStartDate,
 		updateEndDate,
 		updateSelectedClient,
 		updateSelectedPod,
+		updateSelectedSdr,
 		selectedDateFilter,
 		updateSelectedDateFilter,
 	} = useFilterStore();
@@ -55,6 +59,7 @@ const DataGridHeader = ({
 
 	const selectedPodName = podOptions?.find((pod) => pod.id === selectedPod)?.name;
 	const selectedClientName = clientOptions?.find((client) => client.id === selectedClient)?.name;
+	const selectedSdrName = sdrOptions?.find((sdr) => sdr.id === selectedSdr)?.name;
 
 	return (
 		<div className="flex flex-col gap-4">
@@ -137,6 +142,13 @@ const DataGridHeader = ({
 						)}
 						{children}
 
+						{onExport && (
+							<Button onClick={onExport} variant="outline" className="flex bg-gray-100">
+								<FileDown className="h-4 w-4" />
+								<p className="hidden md:flex">Exportar</p>
+							</Button>
+						)}
+
 						{showNewButton && (
 							<Button onClick={onNewClick} className="flex">
 								<PlusIcon className="h-4 w-4" />
@@ -184,6 +196,15 @@ const DataGridHeader = ({
 						<Chip color="indigo" className="cursor-pointer" onClick={() => updateSelectedPod(null)}>
 							<div className="flex gap-2 items-center">
 								{selectedPodName}
+								<X className="h-4 w-4 hover:text-indigo-800 hover:scale-105" />
+							</div>
+						</Chip>
+					)}
+
+					{selectedSdr && selectedSdrName && (
+						<Chip color="indigo" className="cursor-pointer" onClick={() => updateSelectedSdr(null)}>
+							<div className="flex gap-2 items-center">
+								{selectedSdrName}
 								<X className="h-4 w-4 hover:text-indigo-800 hover:scale-105" />
 							</div>
 						</Chip>

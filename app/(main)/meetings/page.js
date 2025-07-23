@@ -10,6 +10,7 @@ import {
 } from "@/app/actions/meetings";
 import { fetchClients } from "@/app/actions/clients";
 import { fetchPods } from "@/app/actions/pods";
+import { fetchSDRs } from "@/app/actions/users";
 import BaseDataGrid from "@/components/ui/BaseDataGrid";
 import DataGridHeader from "@/components/ui/DataGridHeader";
 import { useToast } from "@/hooks/use-toast";
@@ -34,6 +35,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import RescheduleModal from "./RescheduleModal";
 import Combobox from "@/components/ui/Combobox";
 import CommentsModal from "@/components/CommentsModal";
+import { exportToXLSX } from "@/lib/xlsx-export";
 
 export default function MeetingsPage() {
 	const { toast } = useToast();
@@ -50,6 +52,7 @@ export default function MeetingsPage() {
 	const [refreshData, setRefreshData] = useState(false);
 	const [clientOptions, setClientOptions] = useState([]);
 	const [podOptions, setPodOptions] = useState([]);
+	const [sdrOptions, setSdrOptions] = useState([]);
 	const [isCommentsModalOpen, setIsCommentsModalOpen] = useState(false);
 	const [selectedMeetingComments, setSelectedMeetingComments] = useState([]);
 	const [selectedMeetingId, setSelectedMeetingId] = useState(null);
@@ -59,10 +62,12 @@ export default function MeetingsPage() {
 		updateFilter,
 		selectedPod,
 		selectedClient,
+		selectedSdr,
 		startDate,
 		endDate,
 		updateSelectedPod,
 		updateSelectedClient,
+		updateSelectedSdr,
 		searchTerm,
 		setSearchTerm,
 		_hasHydrated,
@@ -170,7 +175,8 @@ export default function MeetingsPage() {
 						startDate,
 						endDate,
 						selectedClient,
-						selectedPod
+						selectedPod,
+						selectedSdr
 					);
 					if (!error) {
 						setData(data);
@@ -217,7 +223,6 @@ export default function MeetingsPage() {
 		},
 	];
 
-	// Show all columns for all users (no filtering)
 	const columns = allColumns;
 
 	const filters = [
@@ -249,8 +254,10 @@ export default function MeetingsPage() {
 			setIsLoading(true);
 			const { data } = await fetchClients();
 			const { data: podData } = await fetchPods();
+			const { data: sdrData } = await fetchSDRs();
 			setClientOptions(data);
 			setPodOptions(podData);
+			setSdrOptions(sdrData);
 
 			setIsLoading(false);
 		};
@@ -269,7 +276,8 @@ export default function MeetingsPage() {
 				startDate,
 				endDate,
 				selectedClient,
-				selectedPod
+				selectedPod,
+				selectedSdr
 			);
 
 			if (error) {
@@ -293,6 +301,7 @@ export default function MeetingsPage() {
 		endDate,
 		selectedClient,
 		selectedPod,
+		selectedSdr,
 		_hasHydrated,
 		page,
 	]);
@@ -343,6 +352,60 @@ export default function MeetingsPage() {
 		setRescheduleModalOpen(true);
 	};
 
+	const handleExport = async () => {
+		setIsLoading(true);
+		const { data, error } = await fetchMeetings(
+			debouncedSearchTerm,
+			selectedFilters,
+			1,
+			startDate,
+			endDate,
+			selectedClient,
+			selectedPod,
+			selectedSdr,
+			true // all
+		);
+
+		if (error) {
+			toast({
+				title: "Error",
+				description: "No se pudieron exportar las reuniones",
+				variant: "destructive",
+			});
+		} else {
+			const dataToExport = data.map((meeting) => {
+				const baseData = {
+					Cliente: meeting.client?.name || "",
+					País: meeting.country?.name || "",
+					Fecha: meeting.date,
+					Empresa: meeting.prospect,
+					"Nombre Contacto": meeting.prospectContactName,
+					"Email Contacto": meeting.prospectContactEmail,
+					"Teléfono Contacto": meeting.prospectContactPhone,
+					"Rol Contacto": meeting.prospectContactRole,
+					Canal: meeting.channel,
+					Pod: meeting.pod?.name || "",
+					SDR: meeting.sdr?.name || "",
+					"Realizada?": meeting.held === null ? "Pendiente" : meeting.held ? "Sí" : "No",
+					"Validada?": meeting.validated === null ? "Pendiente" : meeting.validated ? "Si" : "No",
+				};
+
+				const additionalFields = meeting.additionalFields || {};
+				const formFields = meeting.form?.fields || [];
+				const dynamicFields = {};
+
+				formFields.forEach((field) => {
+					dynamicFields[field.label] = additionalFields[field.id] || "";
+				});
+
+				return { ...baseData, ...dynamicFields };
+			});
+
+			exportToXLSX(dataToExport, "reuniones");
+		}
+		setIsLoading(false);
+	};
+
 	return (
 		<div className="m-4 p-4 flex flex-col gap-4 bg-gray-50 border-2 border-gray-300 rounded-xl shadow-gray-400">
 			<BaseDataGrid
@@ -368,9 +431,11 @@ export default function MeetingsPage() {
 					onSearchChange={setSearchTerm}
 					isLoading={isLoading}
 					onNewClick={() => router.push("/meetings/new")}
+					onExport={handleExport}
 					filters={filters}
 					clientOptions={clientOptions}
 					podOptions={podOptions}
+					sdrOptions={sdrOptions}
 					showNewButton={session?.accountType !== "EXTERNAL"}
 					showDateFilter={true}
 				>
@@ -425,6 +490,20 @@ export default function MeetingsPage() {
 								<div className="flex flex-col gap-2 border-b border-gray-200 pb-4 last:border-0">
 									<DropdownMenuLabel className="font-semibold text-sm px-0">Pod</DropdownMenuLabel>
 									<Combobox items={podOptions} value={selectedPod} onChange={updateSelectedPod} />
+								</div>
+							)}
+
+							{/* SDR Filter */}
+							{session?.accountType === "ADMIN" && (
+								<div className="flex flex-col gap-2 border-b border-gray-200 pb-4 last:border-0">
+									<DropdownMenuLabel className="font-semibold text-sm px-0">
+										SDR
+									</DropdownMenuLabel>
+									<Combobox
+										items={sdrOptions}
+										value={selectedSdr}
+										onChange={updateSelectedSdr}
+									/>
 								</div>
 							)}
 						</DropdownMenuContent>

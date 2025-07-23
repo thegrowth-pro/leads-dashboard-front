@@ -16,17 +16,20 @@ export async function fetchMeetings(
 	startDate = null,
 	endDate = null,
 	selectedClient = null,
-	selectedPod = null
+	selectedPod = null,
+	selectedSdr = null,
+	all = false
 ) {
 	const queryParams = buildQueryParams({
 		search: searchTerm,
 		...filters,
-		size: 10,
+		size: all ? 1000 : 10,
 		page,
 		startDate,
 		endDate,
 		clientId: selectedClient,
 		podId: selectedPod,
+		sdrId: selectedSdr,
 	});
 
 	const url = `/meetings?${queryParams}`;

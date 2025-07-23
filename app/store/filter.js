@@ -11,6 +11,7 @@ const useFilterStore = create(
 			selectedFilters: {},
 			selectedClient: null,
 			selectedPod: null,
+			selectedSdr: null,
 			lastPath: "", // Mantenemos el estado inicial como string vacío
 			_hasHydrated: false, // Estado para tracking de hidratación
 
@@ -61,6 +62,10 @@ const useFilterStore = create(
 				set({ selectedPod: pod });
 			},
 
+			updateSelectedSdr: (sdr) => {
+				set({ selectedSdr: sdr });
+			},
+
 			updateStartDate: (date) => set({ startDate: date }),
 			updateEndDate: (date) => set({ endDate: date }),
 			updateSelectedDateFilter: (filter) => set({ selectedDateFilter: filter }),
@@ -75,6 +80,7 @@ const useFilterStore = create(
 					selectedDateFilter: "",
 					selectedClient: null,
 					selectedPod: null,
+					selectedSdr: null,
 				}),
 		}),
 		{
