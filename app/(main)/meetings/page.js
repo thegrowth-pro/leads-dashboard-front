@@ -70,6 +70,8 @@ export default function MeetingsPage() {
 		updateSelectedSdr,
 		searchTerm,
 		setSearchTerm,
+		sortBy,
+		sortOrder,
 		_hasHydrated,
 	} = useFilterStore();
 	
@@ -176,7 +178,10 @@ export default function MeetingsPage() {
 						endDate,
 						selectedClient,
 						selectedPod,
-						selectedSdr
+						selectedSdr,
+						false,
+						sortBy,
+						sortOrder
 					);
 					if (!error) {
 						setData(data);
@@ -224,6 +229,13 @@ export default function MeetingsPage() {
 	];
 
 	const columns = allColumns;
+
+	const sortOptions = allColumns
+		.filter((col) => col.accessor && !["button", "custom"].includes(col.type))
+		.map((col) => ({
+			value: col.accessor,
+			label: col.header,
+		}));
 
 	const filters = [
 		{
@@ -277,7 +289,10 @@ export default function MeetingsPage() {
 				endDate,
 				selectedClient,
 				selectedPod,
-				selectedSdr
+				selectedSdr,
+				false,
+				sortBy,
+				sortOrder
 			);
 
 			if (error) {
@@ -304,6 +319,8 @@ export default function MeetingsPage() {
 		selectedSdr,
 		_hasHydrated,
 		page,
+		sortBy,
+		sortOrder,
 	]);
 
 	const handleRowClick = (id) => {
@@ -363,7 +380,9 @@ export default function MeetingsPage() {
 			selectedClient,
 			selectedPod,
 			selectedSdr,
-			true // all
+			true, // all
+			sortBy,
+			sortOrder
 		);
 
 		if (error) {
@@ -438,6 +457,7 @@ export default function MeetingsPage() {
 					sdrOptions={sdrOptions}
 					showNewButton={session?.accountType !== "EXTERNAL"}
 					showDateFilter={true}
+					sortOptions={sortOptions}
 				>
 					<DropdownMenu>
 						<DropdownMenuTrigger asChild>

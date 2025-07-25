@@ -14,10 +14,20 @@ const useFilterStore = create(
 			selectedSdr: null,
 			lastPath: "", // Mantenemos el estado inicial como string vacío
 			_hasHydrated: false, // Estado para tracking de hidratación
+			sortBy: "date", // Default sort by date
+			sortOrder: "desc", // Default sort order
 
 			setHasHydrated: (state) => set({ _hasHydrated: state }),
 
 			setSearchTerm: (term) => set({ searchTerm: term || "" }),
+
+			updateSort: (newSortBy) =>
+				set((state) => ({
+					sortBy: newSortBy,
+					sortOrder: state.sortBy === newSortBy ? (state.sortOrder === "asc" ? "desc" : "asc") : "desc",
+				})),
+
+			resetSort: () => set({ sortBy: "date", sortOrder: "desc" }),
 
 			updateFilter: (filterGroup, optionValue, isChecked, oneOnly) => {
 				set((state) => {
@@ -81,6 +91,8 @@ const useFilterStore = create(
 					selectedClient: null,
 					selectedPod: null,
 					selectedSdr: null,
+					sortBy: "date",
+					sortOrder: "desc",
 				}),
 		}),
 		{

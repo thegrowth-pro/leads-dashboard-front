@@ -18,7 +18,9 @@ export async function fetchMeetings(
 	selectedClient = null,
 	selectedPod = null,
 	selectedSdr = null,
-	all = false
+	all = false,
+	sortBy = "date",
+	sortOrder = "desc"
 ) {
 	const queryParams = buildQueryParams({
 		search: searchTerm,
@@ -30,6 +32,8 @@ export async function fetchMeetings(
 		clientId: selectedClient,
 		podId: selectedPod,
 		sdrId: selectedSdr,
+		sortBy,
+		sortOrder,
 	});
 
 	const url = `/meetings?${queryParams}`;

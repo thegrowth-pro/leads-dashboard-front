@@ -2,7 +2,7 @@
 import React from "react";
 import { Input } from "./input";
 import { Button } from "./button";
-import { PlusIcon, X, Calendar, FileDown } from "lucide-react";
+import { PlusIcon, X, Calendar, FileDown, ArrowDownUp } from "lucide-react";
 import useFilterStore from "@/app/store/filter";
 import Chip from "./chip";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "./dropdown-menu";
@@ -31,6 +31,7 @@ const DataGridHeader = ({
 	podOptions,
 	sdrOptions,
 	onExport,
+	sortOptions,
 }) => {
 	const {
 		selectedFilters,
@@ -47,6 +48,10 @@ const DataGridHeader = ({
 		updateSelectedSdr,
 		selectedDateFilter,
 		updateSelectedDateFilter,
+		sortBy,
+		sortOrder,
+		updateSort,
+		resetSort,
 	} = useFilterStore();
 
 	const handleDateFilterChange = (value) => {
@@ -60,6 +65,8 @@ const DataGridHeader = ({
 	const selectedPodName = podOptions?.find((pod) => pod.id === selectedPod)?.name;
 	const selectedClientName = clientOptions?.find((client) => client.id === selectedClient)?.name;
 	const selectedSdrName = sdrOptions?.find((sdr) => sdr.id === selectedSdr)?.name;
+
+	const sortLabel = sortOptions?.find((option) => option.value === sortBy)?.label;
 
 	return (
 		<div className="flex flex-col gap-4">
@@ -142,6 +149,27 @@ const DataGridHeader = ({
 						)}
 						{children}
 
+						{sortOptions && (
+							<DropdownMenu>
+								<DropdownMenuTrigger asChild>
+									<Button variant="outline" className="flex bg-gray-100">
+										<ArrowDownUp className="h-4 w-4" />
+										<p className="hidden md:flex">Ordenar por</p>
+									</Button>
+								</DropdownMenuTrigger>
+								<DropdownMenuContent className="w-56 p-2 bg-gray-50">
+									<RadioGroup value={sortBy} onValueChange={updateSort}>
+										{sortOptions.map((option) => (
+											<div key={option.value} className="flex items-center space-x-2 p-2">
+												<RadioGroupItem value={option.value} id={option.value} />
+												<Label htmlFor={option.value}>{option.label}</Label>
+											</div>
+										))}
+									</RadioGroup>
+								</DropdownMenuContent>
+							</DropdownMenu>
+						)}
+
 						{onExport && (
 							<Button onClick={onExport} variant="outline" className="flex bg-gray-100">
 								<FileDown className="h-4 w-4" />
@@ -161,7 +189,15 @@ const DataGridHeader = ({
 				{/* Filtrados */}
 			</div>
 			{!isLoading && (
-				<div className="flex gap-4">
+				<div className="flex gap-4 items-center flex-wrap">
+					{sortLabel && sortBy !== "date" && (
+						<Chip color="green" className="cursor-pointer" onClick={resetSort}>
+							<div className="flex gap-2 items-center">
+								Ordenado por {sortLabel} ({sortOrder === "asc" ? "↑" : "↓"})
+								<X className="h-4 w-4 hover:text-green-800 hover:scale-105" />
+							</div>
+						</Chip>
+					)}
 					{Object.entries(selectedFilters).map(([filterGroup, values]) =>
 						values.map((value) => (
 							<Chip
